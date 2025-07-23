@@ -138,6 +138,21 @@ const seedMeals = [
     ingredients: [
       { name: "Chicken Breast", quantity: "200g" },
       { name: "Soya Chunks (Dry)", quantity: "60g" },
+      { name: "Whole Wheat Flour", quantity: "80g" },
+      { name: "Plain Curd/Yogurt", quantity: "40g" },
+    ],
+  },
+  {
+    name: "Quick Snack",
+    templateType: "Snacks",
+    ingredients: [{ name: "Banana", quantity: "100g" }],
+  },
+  {
+    name: "Protein-Packed Dinner",
+    templateType: "Dinner",
+    ingredients: [
+      { name: "Egg (Large)", quantity: "400g" },
+      { name: "Whole Wheat Flour", quantity: "20g" },
     ],
   },
 ];
