@@ -138,6 +138,12 @@ function Navbar() {
           </span>{" "}
           <p>My Workouts</p>
         </NavItem>
+        <NavItem to="/history/workouts">
+          <span>
+            <FaBook />
+          </span>{" "}
+          <p>Logbook</p>
+        </NavItem>
       </NavItemGroup>
       <NavItemGroup>
         <LogoutButton onClick={handleLogout}>
