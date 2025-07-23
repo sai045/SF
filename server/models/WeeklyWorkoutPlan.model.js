@@ -1,13 +1,12 @@
 const mongoose = require("mongoose");
 
-// This schema defines a structured workout plan for an entire week for a specific user.
 const weeklyWorkoutPlanSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      // required: true,
-      index: true, // Indexing for faster lookups by user
+      default: null,
+      index: true,
     },
     planName: {
       type: String,
@@ -15,9 +14,7 @@ const weeklyWorkoutPlanSchema = new mongoose.Schema(
     },
     weekStartDate: {
       type: Date,
-      required: true,
     },
-    // Each day can link to a specific Workout document. 'null' signifies a rest day.
     days: {
       monday: {
         type: mongoose.Schema.Types.ObjectId,

@@ -36,8 +36,8 @@ function RegisterPage() {
   };
 
   return (
-    <AppContainer>
-      <FormCard onSubmit={handleSubmit}>
+    <AppContainer style={{ justifyContent: "center" }}>
+      <FormCard as="form" onSubmit={handleSubmit}>
         <Title>BECOME A HUNTER</Title>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         <Input
@@ -56,13 +56,14 @@ function RegisterPage() {
         />
         <Input
           type="password"
-          placeholder="Password"
+          placeholder="Password (min 6 characters)"
+          minLength="6"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         <Button type="submit" disabled={loading}>
-          {loading ? "CREATING..." : "REGISTER"}
+          {loading ? "AWAKENING..." : "REGISTER"}
         </Button>
         <FormLink>
           Already a hunter? <Link to="/login">Login</Link>

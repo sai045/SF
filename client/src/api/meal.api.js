@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/planner";
+const API_URL = "http://localhost:5001/api/meals";
 
 const apiClient = axios.create({ baseURL: API_URL });
 
@@ -15,8 +15,12 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Endpoint for all dashboard data
-export const getDashboardData = async () => {
-  const response = await apiClient.get("/dashboard");
+export const searchIngredients = async (query) => {
+  const response = await apiClient.get(`/ingredients/search?q=${query}`);
+  return response.data;
+};
+
+export const logCustomMeal = async (logData) => {
+  const response = await apiClient.post("/log_custom", logData);
   return response.data;
 };

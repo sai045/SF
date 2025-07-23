@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/planner";
+const API_URL = "http://localhost:5001/api/users";
 
 const apiClient = axios.create({ baseURL: API_URL });
 
@@ -15,8 +15,12 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Endpoint for all dashboard data
-export const getDashboardData = async () => {
-  const response = await apiClient.get("/dashboard");
+export const updateUserProfile = async (profileData) => {
+  const response = await apiClient.put("/profile", profileData);
+  return response.data;
+};
+
+export const getUserProfile = async () => {
+  const response = await apiClient.get("/profile");
   return response.data;
 };

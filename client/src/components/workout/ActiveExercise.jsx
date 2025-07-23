@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { Input, Button } from "../common/Styled";
 import { theme } from "../../styles/theme";
+import { getExerciseHistory } from "../../api/workout.api.js";
 
 const ExerciseCard = styled.div`
   background-color: ${theme.colors.cardBackground};
@@ -11,10 +12,20 @@ const ExerciseCard = styled.div`
   margin-top: 2rem;
 `;
 
+const LastPerformance = styled.p`
+  color: ${theme.colors.accent};
+  background: rgba(241, 196, 15, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  text-align: center;
+`;
+
 const SetRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   padding: 1rem;
   margin-bottom: 1rem;
   background-color: ${(props) =>
@@ -24,19 +35,28 @@ const SetRow = styled.div`
   span {
     font-weight: bold;
     min-width: 60px;
+    font-size: 1.2rem;
   }
 `;
 
 const SetInput = styled(Input)`
   width: 80px;
-  margin: 0 1rem;
+  margin: 0;
   text-align: center;
 `;
 
 function ActiveExercise({ exercise, onSetComplete }) {
   const [setsData, setSetsData] = useState([]);
+  const [lastPerformance, setLastPerformance] = useState(null);
 
   useEffect(() => {
+    // Fetch last performance when the exercise changes
+    getExerciseHistory(exercise.name)
+      .then((data) => {
+        setLastPerformance(data);
+      })
+      .catch((err) => console.error("Could not fetch exercise history", err));
+
     // Initialize state for each set
     const initialSets = Array.from({ length: exercise.sets }, (_, i) => ({
       setNumber: i + 1,
@@ -58,17 +78,23 @@ function ActiveExercise({ exercise, onSetComplete }) {
     newSetsData[index].isLogged = true;
     setSetsData(newSetsData);
 
-    // Pass the completed set data up to the parent WorkoutPage
     onSetComplete({
       exerciseName: exercise.name,
-      ...newSetsData[index],
+      setNumber: newSetsData[index].setNumber,
+      weight: newSetsData[index].weight,
+      reps: newSetsData[index].reps,
     });
   };
 
   return (
     <ExerciseCard>
       <h2>{exercise.name}</h2>
-      <p>
+      {lastPerformance && (
+        <LastPerformance>
+          Last time: {lastPerformance.weight}kg x {lastPerformance.reps} reps
+        </LastPerformance>
+      )}
+      <p style={{ textAlign: "center", color: theme.colors.textMuted }}>
         Target Reps: {exercise.reps} | Rest: {exercise.rest}s
       </p>
 
@@ -95,7 +121,11 @@ function ActiveExercise({ exercise, onSetComplete }) {
             <Button
               onClick={() => handleLogSet(index)}
               disabled={set.isLogged || !set.weight || !set.reps}
-              style={{ width: "120px" }}
+              style={{
+                width: "auto",
+                padding: "0.8rem 1.5rem",
+                minWidth: "120px",
+              }}
             >
               {set.isLogged ? "LOGGED" : "LOG SET"}
             </Button>

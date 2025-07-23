@@ -5,7 +5,7 @@ const setLogSchema = new mongoose.Schema({
   setNumber: Number,
   weight: Number,
   reps: Number,
-  isPR: { type: Boolean, default: false }, // Personal Record
+  isPR: { type: Boolean, default: false },
 });
 
 const workoutLogSchema = new mongoose.Schema(
@@ -21,8 +21,8 @@ const workoutLogSchema = new mongoose.Schema(
       required: true,
     },
     date: { type: Date, default: Date.now },
-    totalVolume: Number, // Total weight lifted (sets * reps * weight)
-    duration: Number, // In seconds
+    totalVolume: Number,
+    duration: Number,
     setsLogged: [setLogSchema],
     expGained: { type: Number, default: 0 },
   },

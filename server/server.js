@@ -1,38 +1,45 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const cron = require("node-cron");
 
 const connectDB = require("./config/db");
+const { runDailySummaryJob } = require("./jobs/dailySummary");
 
-// --- Import Routes ---
 const userRoutes = require("./routes/user.routes");
 const workoutRoutes = require("./routes/workout.routes");
 const plannerRoutes = require("./routes/planner.routes");
+const mealRoutes = require("./routes/meal.routes");
+const activityRoutes = require("./routes/activity.routes");
 
-// --- Initialize Server & Database ---
 const app = express();
-connectDB(); // Connect to MongoDB
+connectDB();
 
-// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 
-// --- Basic Test Route ---
 app.get("/", (req, res) => {
-  res.json({
-    message: "[System] SoloFit Server is online.",
-    status: "Operational",
-    timestamp: new Date().toISOString(),
-  });
+  res.json({ message: "[System] SoloFit Server is online." });
 });
 
-// --- API Routes ---
 app.use("/api/users", userRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/planner", plannerRoutes);
+app.use("/api/meals", mealRoutes);
+app.use("/api/activity", activityRoutes);
 
-// --- Start Server ---
-const PORT = process.env.PORT || 5000;
+// Schedule the job to run once every day at 1:05 AM UTC server time
+cron.schedule(
+  "5 1 * * *",
+  () => {
+    runDailySummaryJob();
+  },
+  {
+    timezone: "Etc/UTC",
+  }
+);
+
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`[System] Server is running on port: ${PORT}`);
   console.log(`[System] Awaiting Hunter actions...`);

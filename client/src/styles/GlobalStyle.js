@@ -22,6 +22,7 @@ export const GlobalStyle = createGlobalStyle`
     font-family: ${theme.fonts.heading};
     color: ${theme.colors.primary};
     letter-spacing: 1.5px;
+    margin: 0;
   }
 
   a {

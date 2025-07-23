@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/planner";
+const API_URL = "http://localhost:5001/api/activity";
 
 const apiClient = axios.create({ baseURL: API_URL });
 
@@ -15,8 +15,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Endpoint for all dashboard data
-export const getDashboardData = async () => {
-  const response = await apiClient.get("/dashboard");
+export const logSteps = async (stepsData) => {
+  const response = await apiClient.post("/steps", stepsData);
   return response.data;
 };

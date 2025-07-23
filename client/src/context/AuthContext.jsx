@@ -8,23 +8,41 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for user on initial load
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      localStorage.removeItem("user");
     }
     setLoading(false);
   }, []);
 
+  const updateFullUserState = (newUserData) => {
+    // This function completely replaces the user state, for login/register/profile updates
+    localStorage.setItem("user", JSON.stringify(newUserData));
+    setUser(newUserData);
+  };
+
+  const updateUserStats = (updatedStats) => {
+    // This function intelligently merges new stats into the existing user object
+    const currentUserData = JSON.parse(localStorage.getItem("user"));
+    const updatedData = { ...currentUserData, ...updatedStats };
+    localStorage.setItem("user", JSON.stringify(updatedData));
+    setUser(updatedData);
+  };
+
   const login = async (email, password) => {
     const userData = await authService.login({ email, password });
-    setUser(userData);
+    updateFullUserState(userData);
     return userData;
   };
 
   const register = async (username, email, password) => {
     const userData = await authService.register({ username, email, password });
-    setUser(userData);
+    updateFullUserState(userData);
     return userData;
   };
 
@@ -35,6 +53,8 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    setUser: updateFullUserState,
+    updateUserStats,
     isAuthenticated: !!user,
     loading,
     login,

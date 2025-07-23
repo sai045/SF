@@ -1,118 +1,127 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { AppContainer, SystemMessageCard } from "../components/common/Styled";
+import { getDashboardData } from "../api/planner.api";
+import { AppContainer, Title } from "../components/common/Styled";
+import DailyQuestItem from "../components/planner/DailyQuestItem";
 import styled from "styled-components";
 import { theme } from "../styles/theme";
-import plannerService from "../api/planner.api";
-import DailyQuestItem from "../components/planner/DailyQuestItem";
-// You might still want to import EXPBar and other stats components for a header
 
-const PlannerHeader = styled.div`
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.5rem;
+const DashboardGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  width: 100%;
+  max-width: 900px;
+`;
+
+const StatCard = styled.div`
+  background: ${theme.colors.cardBackgroundSolid};
+  padding: 2rem;
+  border-radius: 8px;
+  border-left: 5px solid ${(props) => props.color || theme.colors.primary};
+`;
+
+const CalorieDisplay = styled.div`
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  text-align: center;
+  margin: 2rem 0;
 
   h2 {
+    font-size: 2.5rem;
     margin: 0;
+    color: ${theme.colors.text};
   }
-
-  p {
-    margin: 0.5rem 0 0;
-  }
-`;
-
-const QuestList = styled.div`
-  margin-top: 1.5rem;
-`;
-
-const NextAction = styled.div`
-  margin-top: 2rem;
-  padding: 1rem;
-  text-align: center;
-  background: linear-gradient(
-    90deg,
-    rgba(142, 68, 173, 0.2),
-    rgba(0, 168, 255, 0.2)
-  );
-  border-radius: 4px;
-  font-weight: bold;
-  color: ${theme.colors.text};
-
   span {
-    color: ${theme.colors.accent};
+    font-size: 0.8rem;
+    color: ${theme.colors.textMuted};
   }
-`;
-
-const LoadingSpinner = styled.div`
-  /* A simple CSS spinner */
-  font-size: 2rem;
-  text-align: center;
-  font-family: ${theme.fonts.heading};
 `;
 
 function DashboardPage() {
   const { user } = useAuth();
-  const [plannerData, setPlannerData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchPlanner = async () => {
-      try {
-        const data = await plannerService.getTodaysPlan();
-        setPlannerData(data);
-      } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to fetch daily quests."
-        );
-      } finally {
+    getDashboardData()
+      .then((data) => {
+        setDashboardData(data);
         setLoading(false);
-      }
-    };
-
-    fetchPlanner();
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
+
+  if (loading)
+    return (
+      <AppContainer>
+        <h2>[ SYSTEM LOADING DASHBOARD... ]</h2>
+      </AppContainer>
+    );
+  if (!dashboardData)
+    return (
+      <AppContainer>
+        <h2>Could not load dashboard data.</h2>
+      </AppContainer>
+    );
+
+  const balance = dashboardData.caloriesIn - dashboardData.estimatedTDEE;
 
   return (
     <AppContainer>
-      <SystemMessageCard>
-        {loading && <LoadingSpinner>[ SYSTEM LOADING... ]</LoadingSpinner>}
-        {error && <div>{error}</div>}
+      <DashboardGrid>
+        <StatCard color={theme.colors.accent}>
+          <h2>Today's Status</h2>
+          <CalorieDisplay>
+            <div>
+              <h2>{dashboardData.caloriesIn}</h2>
+              <span>CAL IN</span>
+            </div>
+            <h2>-</h2>
+            <div>
+              <h2>{dashboardData.estimatedTDEE}</h2>
+              <span>CAL OUT</span>
+            </div>
+            <h2>=</h2>
+            <div
+              style={{
+                color: balance > 0 ? theme.colors.danger : theme.colors.primary,
+              }}
+            >
+              <h2 style={{ color: "inherit" }}>{balance}</h2>
+              <span>BALANCE</span>
+            </div>
+          </CalorieDisplay>
+        </StatCard>
 
-        {plannerData && (
-          <>
-            <PlannerHeader>
-              <h2>[ DAILY QUESTS ] - {plannerData.date}</h2>
-              <p>Welcome, {user.username}. Complete these tasks to gain EXP.</p>
-            </PlannerHeader>
-
-            <h3>Today's Workout</h3>
-            <QuestList>
-              {plannerData.dailyWorkout ? (
-                <DailyQuestItem
-                  type="workout"
-                  data={plannerData.dailyWorkout}
-                />
-              ) : (
-                <p>You have a rest day. Focus on recovery, Hunter.</p>
-              )}
-            </QuestList>
-
-            <h3>Nutrition Log</h3>
-            <QuestList>
-              {plannerData.dailyMeals.map((meal) => (
-                <DailyQuestItem key={meal.name} type="meal" data={meal} />
-              ))}
-            </QuestList>
-
-            {plannerData.nextBestAction && (
-              <NextAction>
-                ▶ Next Action: <span>{plannerData.nextBestAction}</span>
-              </NextAction>
-            )}
-          </>
-        )}
-      </SystemMessageCard>
+        <StatCard color={theme.colors.primary}>
+          <h2>[ Daily Quests ]</h2>
+          {dashboardData.todaysWorkoutQuest ? (
+            <DailyQuestItem
+              type="workout"
+              data={dashboardData.todaysWorkoutQuest}
+            />
+          ) : (
+            <p>No workout scheduled for today. Focus on recovery.</p>
+          )}
+          {/* Placeholder for Meal Quests - linking to the nutrition page is a good UX */}
+          <DailyQuestItem
+            type="meal"
+            data={{ name: "Log Today's Meals", status: "pending" }}
+          />
+          <DailyQuestItem
+            type="activity"
+            data={{
+              name: `Log ${user.personalGoals?.dailyStepGoal || 8000} Steps`,
+              status: "pending",
+            }}
+          />
+        </StatCard>
+      </DashboardGrid>
     </AppContainer>
   );
 }

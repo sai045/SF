@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   AppContainer,
@@ -18,7 +18,10 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  const from = location.state?.from?.pathname || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +29,7 @@ function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to login.");
     } finally {
@@ -35,8 +38,8 @@ function LoginPage() {
   };
 
   return (
-    <AppContainer>
-      <FormCard onSubmit={handleSubmit}>
+    <AppContainer style={{ justifyContent: "center" }}>
+      <FormCard as="form" onSubmit={handleSubmit}>
         <Title>HUNTER LOGIN</Title>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         <Input

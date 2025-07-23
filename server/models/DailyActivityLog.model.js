@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// This schema captures daily, non-workout related metrics like steps and sleep.
 const dailyActivityLogSchema = new mongoose.Schema(
   {
     userId: {
@@ -8,25 +7,26 @@ const dailyActivityLogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    date: {
-      type: Date,
-      required: true,
-    },
+    date: { type: Date, required: true, index: true },
     steps: {
       count: { type: Number, default: 0 },
       goal: { type: Number, default: 8000 },
       expGained: { type: Number, default: 0 },
     },
     sleep: {
-      duration: { type: Number, default: 0 }, // Duration in minutes for precision
-      quality: { type: String, enum: ["Poor", "Fair", "Good", "Excellent"] }, // Optional quality metric
+      duration: { type: Number, default: 0 },
+      quality: { type: String, enum: ["Poor", "Fair", "Good", "Excellent"] },
       expGained: { type: Number, default: 0 },
     },
-    // We can add other daily check-ins here later
+    calorieBalance: {
+      caloriesIn: { type: Number, default: 0 },
+      caloriesOut: { type: Number, default: 0 },
+      finalBalance: { type: Number, default: 0 },
+      isFinalized: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,
-    // Create a compound index to ensure only one log per user per day
     indexes: [{ unique: true, fields: ["userId", "date"] }],
   }
 );

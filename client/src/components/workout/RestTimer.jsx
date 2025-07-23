@@ -31,6 +31,8 @@ const SkipButton = styled.button`
   border-radius: 20px;
   cursor: pointer;
   margin-top: 2rem;
+  font-size: 1rem;
+  font-family: ${theme.fonts.body};
 
   &:hover {
     border-color: ${theme.colors.accent};

@@ -1,20 +1,17 @@
 const User = require("../models/User.model");
+const WeeklyWorkoutPlan = require("../models/WeeklyWorkoutPlan.model");
+const WeeklyMealPlan = require("../models/WeeklyMealPlan.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { gameConfig } = require("../utils/gamification");
-const WeeklyWorkoutPlan = require("../models/WeeklyWorkoutPlan.model");
-const WeeklyMealPlan = require("../models/WeeklyMealPlan.model");
+const { calculateBMR } = require("../utils/fitnessCalculator");
 
-// --- Helper to generate JWT ---
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 };
 
-// @desc    Register a new Hunter
-// @route   POST /api/users/register
-// @access  Public
 const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -32,7 +29,6 @@ const registerUser = async (req, res) => {
         .json({ message: "A Hunter with this email already exists." });
     }
 
-    // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -41,59 +37,53 @@ const registerUser = async (req, res) => {
     });
     const defaultMealPlan = await WeeklyMealPlan.findOne({ userId: null });
 
-    // Create the user
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
-      expToNextLevel: gameConfig.LEVEL_UP_FORMULA(1), // Set initial EXP goal
+      expToNextLevel: gameConfig.LEVEL_UP_FORMULA(1),
       activeWorkoutPlan: defaultWorkoutPlan ? defaultWorkoutPlan._id : null,
       activeMealPlan: defaultMealPlan ? defaultMealPlan._id : null,
     });
 
     if (user) {
+      const userResponse = await User.findById(user._id).select("-password");
       res.status(201).json({
-        _id: user.id,
-        username: user.username,
-        email: user.email,
-        level: user.level,
-        rank: user.rank,
+        ...userResponse.toObject(),
         token: generateToken(user._id),
-        message: `[System] Welcome, ${user.username}. You are now a registered Hunter.`,
+        message: `[System] Welcome, ${user.username}. Your default plans have been assigned.`,
       });
     } else {
       res.status(400).json({ message: "Invalid user data." });
     }
   } catch (error) {
-    res.status(500).json({
-      message: "Server error during registration.",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({
+        message: "Server error during registration.",
+        error: error.message,
+      });
   }
 };
 
-// @desc    Authenticate a Hunter & get token
-// @route   POST /api/users/login
-// @access  Public
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      const userResponse = await User.findById(user._id).select("-password");
       res.json({
-        _id: user.id,
-        username: user.username,
-        email: user.email,
-        level: user.level,
-        rank: user.rank,
+        ...userResponse.toObject(),
         token: generateToken(user._id),
         message: `[System] Welcome back, Hunter ${user.username}.`,
       });
     } else {
-      res.status(400).json({
-        message: "Invalid credentials. Check your email or password.",
-      });
+      res
+        .status(400)
+        .json({
+          message: "Invalid credentials. Check your email or password.",
+        });
     }
   } catch (error) {
     res
@@ -102,16 +92,47 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Get current Hunter's profile
-// @route   GET /api/users/profile
-// @access  Private
 const getUserProfile = async (req, res) => {
-  // req.user is populated by the 'protect' middleware
   res.json(req.user);
 };
 
-module.exports = {
-  registerUser,
-  loginUser,
-  getUserProfile,
+const updateUserProfile = async (req, res) => {
+  try {
+    const { gender, age, height_cm, weight_kg } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.physicalMetrics) user.physicalMetrics = {};
+
+    user.physicalMetrics.gender = gender ?? user.physicalMetrics.gender;
+    user.physicalMetrics.age = age ?? user.physicalMetrics.age;
+    user.physicalMetrics.height_cm =
+      height_cm ?? user.physicalMetrics.height_cm;
+    user.physicalMetrics.weight_kg =
+      weight_kg ?? user.physicalMetrics.weight_kg;
+
+    user.physicalMetrics.bmr = calculateBMR(
+      user.physicalMetrics.gender,
+      user.physicalMetrics.weight_kg,
+      user.physicalMetrics.height_cm,
+      user.physicalMetrics.age
+    );
+
+    const updatedUser = await user.save();
+    const responseUser = await User.findById(updatedUser._id).select(
+      "-password"
+    );
+
+    res.json(responseUser);
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        message: "Server error updating profile.",
+        error: error.message,
+      });
+  }
 };
+
+module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile };

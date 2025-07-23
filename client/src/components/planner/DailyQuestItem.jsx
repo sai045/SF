@@ -1,11 +1,13 @@
+import React from "react";
 import styled, { css } from "styled-components";
 import { theme } from "../../styles/theme";
 import { Link } from "react-router-dom";
+import { FaDumbbell, FaUtensils } from "react-icons/fa";
 
 const QuestContainer = styled.div`
   display: flex;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: ${theme.colors.cardBackground};
   padding: 1rem 1.5rem;
   border-radius: 6px;
   margin-bottom: 1rem;
@@ -21,12 +23,21 @@ const QuestContainer = styled.div`
     css`
       opacity: 0.6;
       background-color: rgba(0, 0, 0, 0.1);
+      color: ${theme.colors.textMuted};
+      h4 {
+        color: ${theme.colors.textMuted};
+      }
     `}
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 `;
 
 const Icon = styled.div`
   font-size: 2rem;
   margin-right: 1.5rem;
+  color: ${(props) => props.color};
 `;
 
 const QuestDetails = styled.div`
@@ -70,7 +81,9 @@ const DailyQuestItem = ({ type, data }) => {
 
   const content = (
     <QuestContainer status={status}>
-      <Icon>{isWorkout ? "🏋️" : "🥦"}</Icon>
+      <Icon color={isWorkout ? theme.colors.primary : theme.colors.danger}>
+        {isWorkout ? <FaDumbbell /> : <FaUtensils />}
+      </Icon>
       <QuestDetails>
         <h4>{name}</h4>
         {isWorkout && (
@@ -83,7 +96,7 @@ const DailyQuestItem = ({ type, data }) => {
     </QuestContainer>
   );
 
-  // If it's a PENDING workout, wrap it in a link. Otherwise, it's not clickable.
+  // Link workout quests to the interactive workout page
   if (isWorkout && status === "pending") {
     return (
       <Link to={`/workout/${_id}`} style={{ textDecoration: "none" }}>
@@ -92,7 +105,16 @@ const DailyQuestItem = ({ type, data }) => {
     );
   }
 
-  // For completed items or non-workout items, just return the content.
+  // Link meal quests to the nutrition page
+  if (!isWorkout) {
+    return (
+      <Link to="/nutrition" style={{ textDecoration: "none" }}>
+        {content}
+      </Link>
+    );
+  }
+
+  // For completed workouts, don't make it a link
   return content;
 };
 

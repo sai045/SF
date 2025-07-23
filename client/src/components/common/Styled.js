@@ -5,26 +5,35 @@ export const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100vh;
   padding: 2rem;
+  width: 100%;
 `;
 
-export const FormCard = styled.form`
+export const FormCard = styled.div`
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   padding: 2.5rem;
   background-color: ${theme.colors.cardBackground};
   border: 1px solid ${theme.colors.primary};
   border-radius: 8px;
   box-shadow: ${theme.glow};
   backdrop-filter: blur(5px);
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: ${theme.colors.textMuted};
+  }
 `;
 
 export const Title = styled.h1`
   text-align: center;
   margin-bottom: 2rem;
   font-size: 3rem;
+  color: ${theme.colors.text};
 `;
 
 export const Input = styled.input`
@@ -36,6 +45,7 @@ export const Input = styled.input`
   border-radius: 4px;
   color: ${theme.colors.text};
   font-size: 1rem;
+  font-family: ${theme.fonts.body};
   transition: all 0.2s ease-in-out;
 
   &:focus {
@@ -59,7 +69,7 @@ export const Button = styled.button`
   transition: all 0.2s ease-in-out;
   text-transform: uppercase;
 
-  &:hover {
+  &:hover:not(:disabled) {
     filter: brightness(1.2);
     box-shadow: ${theme.glow};
   }
@@ -67,6 +77,7 @@ export const Button = styled.button`
   &:disabled {
     background-color: ${theme.colors.textMuted};
     cursor: not-allowed;
+    color: rgba(0, 0, 0, 0.5);
   }
 `;
 
@@ -96,7 +107,7 @@ export const SystemMessageCard = styled.div`
   width: 100%;
   max-width: 800px;
   padding: 2rem;
-  background-color: ${theme.colors.cardBackground};
+  background-color: ${theme.colors.cardBackgroundSolid};
   border: 1px solid ${theme.colors.primary};
   border-radius: 8px;
   margin-top: 2rem;

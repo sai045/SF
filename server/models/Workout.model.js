@@ -16,11 +16,11 @@ const workoutSchema = new mongoose.Schema({
     enum: ["Normal", "Boss Battle", "Template"],
     default: "Template",
   },
-  bossName: String, // e.g., "Igris, the Blood-Red Commander"
+  bossName: String,
   muscleGroups: [String],
-  estimatedDuration: Number, // In minutes
+  estimatedDuration: Number,
   exercises: [exerciseSchema],
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // For admin or custom user routines
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
 
 module.exports = mongoose.model("Workout", workoutSchema);

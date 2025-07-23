@@ -1,6 +1,14 @@
 const mongoose = require("mongoose");
 
-// Log of an actual eaten meal
+const loggedIngredientSchema = new mongoose.Schema({
+  ingredientId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ingredient",
+    required: true,
+  },
+  weightInGrams: { type: Number, required: true },
+});
+
 const mealLogSchema = new mongoose.Schema(
   {
     userId: {
@@ -8,14 +16,17 @@ const mealLogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    mealId: { type: mongoose.Schema.Types.ObjectId, ref: "Meal" }, // Link to template if used
-    customIngredients: String, // For logging food not from a template
+    loggedIngredients: [loggedIngredientSchema],
     date: { type: Date, default: Date.now },
-    mealTime: { type: String, enum: ["Breakfast", "Lunch", "Dinner", "Snack"] },
-    calories: { type: Number, required: true },
-    protein: { type: Number, required: true },
-    carbs: { type: Number, required: true },
-    fats: { type: Number, required: true },
+    mealType: {
+      type: String,
+      enum: ["Breakfast", "Lunch", "Dinner", "Snacks"],
+      required: true,
+    },
+    totalCalories: { type: Number, required: true },
+    totalProtein: { type: Number, required: true },
+    totalCarbs: { type: Number, required: true },
+    totalFats: { type: Number, required: true },
     expGained: { type: Number, default: 0 },
   },
   { timestamps: true }

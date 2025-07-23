@@ -7,7 +7,7 @@ const habitSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    name: { type: String, required: true }, // e.g., "Drink Water", "Journal"
+    name: { type: String, required: true },
     streak: { type: Number, default: 0 },
     lastCompleted: Date,
   },

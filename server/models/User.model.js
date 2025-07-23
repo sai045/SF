@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     rank: { type: String, enum: hunterRanks, default: "E" },
     title: { type: String, default: "The Weakest Hunter" },
     prestigeLevel: { type: Number, default: 0 },
-    completedAchievements: [String], // Field for tracking earned titles/badges
+    completedAchievements: [String],
 
     // --- Core Stats & Streaks ---
     streaks: {
@@ -27,7 +27,15 @@ const userSchema = new mongoose.Schema(
         lastDate: { type: Date },
       },
       meal: { count: { type: Number, default: 0 }, lastDate: { type: Date } },
-      // sleep and step streaks will now be calculated from DailyActivityLog
+    },
+
+    // --- Physical Metrics for BMR/TDEE ---
+    physicalMetrics: {
+      gender: { type: String, enum: ["male", "female"] },
+      age: Number,
+      height_cm: Number,
+      weight_kg: Number,
+      bmr: { type: Number, default: 0 },
     },
 
     // --- Goals & Preferences ---
@@ -40,8 +48,6 @@ const userSchema = new mongoose.Schema(
 
     // --- Linked Data (Active Plans) ---
     customWorkouts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Workout" }],
-
-    // --- ADD/UPDATE THESE LINES ---
     activeWorkoutPlan: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "WeeklyWorkoutPlan",
@@ -50,11 +56,8 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "WeeklyMealPlan",
     },
-    // --- END OF UPDATE ---
   },
   { timestamps: true }
 );
-
-// Note: I renamed weeklyMealPlan -> activeMealPlan and added activeWorkoutPlan for clarity and consistency.
 
 module.exports = mongoose.model("User", userSchema);

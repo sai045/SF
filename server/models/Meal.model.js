@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// This model is for Meal TEMPLATES, e.g., "High Protein Breakfast"
 const mealSchema = new mongoose.Schema({
   name: { type: String, required: true },
   templateType: String, // e.g., "Breakfast", "Lunch", "Keto"
@@ -8,11 +7,7 @@ const mealSchema = new mongoose.Schema({
     {
       name: String,
       quantity: String, // e.g., "100g", "1 cup"
-
-      // --- ADD THIS FIELD ---
-      category: { type: String, trim: true }, // e.g., 'Produce', 'Dairy', 'Meat', 'Pantry'
-      // --- END ADDITION ---
-
+      category: { type: String, trim: true },
       calories: Number,
       protein: Number,
       carbs: Number,
