@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { getHistoricalSummary } from "../api/activity.api.js";
 import { AppContainer, Title } from "../components/common/Styled";
 import { theme } from "../styles/theme";
-import LoadingSpinner from "../components/common/LoadingSpinner.js";
+import LoadingSpinner from "../components/common/LoadingSpinner.jsx";
 
 const HistoryContainer = styled.div`
   width: 100%;
