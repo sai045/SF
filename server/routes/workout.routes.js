@@ -8,6 +8,7 @@ const {
   getWorkoutLogDetails,
   createCustomWorkout,
   getMyWorkouts,
+  getMasterExerciseList
 } = require("../controllers/workout.controller");
 const { protect } = require("../middleware/auth.middleware");
 
