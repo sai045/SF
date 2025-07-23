@@ -10,6 +10,7 @@ import {
   FaUser,
   FaSignOutAlt,
   FaBook,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 const NavContainer = styled.nav`
