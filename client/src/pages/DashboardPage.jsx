@@ -5,6 +5,8 @@ import { AppContainer, Title } from "../components/common/Styled";
 import DailyQuestItem from "../components/planner/DailyQuestItem";
 import styled from "styled-components";
 import { theme } from "../styles/theme";
+import HabitTracker from "../components/habits/HabitTracker";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const DashboardGrid = styled.div`
   display: grid;
@@ -40,9 +42,16 @@ const CalorieDisplay = styled.div`
 `;
 
 function DashboardPage() {
-  const { user } = useAuth();
+  const { user, logout, dashboardSummary } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  if (!dashboardSummary)
+    return (
+      <AppContainer>
+        <LoadingSpinner />
+      </AppContainer>
+    );
 
   useEffect(() => {
     getDashboardData()
@@ -52,6 +61,12 @@ function DashboardPage() {
       })
       .catch((err) => {
         console.error(err);
+        if (err.response && err.response.status === 401) {
+          logout();
+        } else {
+          // Handle other errors (e.g., show a notification)
+          console.error("Failed to load dashboard data:", err);
+        }
         setLoading(false);
       });
   }, []);
@@ -69,7 +84,8 @@ function DashboardPage() {
       </AppContainer>
     );
 
-  const balance = dashboardData.caloriesIn - dashboardData.estimatedTDEE;
+  const { caloriesIn, estimatedTDEE, todaysWorkoutQuest } = dashboardSummary;
+  const balance = caloriesIn - estimatedTDEE;
 
   return (
     <AppContainer>
@@ -78,12 +94,12 @@ function DashboardPage() {
           <h2>Today's Status</h2>
           <CalorieDisplay>
             <div>
-              <h2>{dashboardData.caloriesIn}</h2>
+              <h2>{caloriesIn}</h2>
               <span>CAL IN</span>
             </div>
             <h2>-</h2>
             <div>
-              <h2>{dashboardData.estimatedTDEE}</h2>
+              <h2>{estimatedTDEE}</h2>
               <span>CAL OUT</span>
             </div>
             <h2>=</h2>
@@ -100,15 +116,11 @@ function DashboardPage() {
 
         <StatCard color={theme.colors.primary}>
           <h2>[ Daily Quests ]</h2>
-          {dashboardData.todaysWorkoutQuest ? (
-            <DailyQuestItem
-              type="workout"
-              data={dashboardData.todaysWorkoutQuest}
-            />
+          {todaysWorkoutQuest ? (
+            <DailyQuestItem type="workout" data={todaysWorkoutQuest} />
           ) : (
             <p>No workout scheduled for today. Focus on recovery.</p>
           )}
-          {/* Placeholder for Meal Quests - linking to the nutrition page is a good UX */}
           <DailyQuestItem
             type="meal"
             data={{ name: "Log Today's Meals", status: "pending" }}
@@ -120,6 +132,11 @@ function DashboardPage() {
               status: "pending",
             }}
           />
+        </StatCard>
+
+        <StatCard color={theme.colors.secondary}>
+          <h2>[ Habit Tracker ]</h2>
+          <HabitTracker />
         </StatCard>
       </DashboardGrid>
     </AppContainer>

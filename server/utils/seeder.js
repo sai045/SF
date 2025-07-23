@@ -8,6 +8,10 @@ const WeeklyWorkoutPlan = require("../models/WeeklyWorkoutPlan.model");
 const Meal = require("../models/Meal.model");
 const WeeklyMealPlan = require("../models/WeeklyMealPlan.model");
 const Ingredient = require("../models/Ingredient.model");
+const ExerciseLog = require("../models/ExerciseLog.model");
+const MealLog = require("../models/MealLog.model");
+const DailyActivityLog = require("../models/DailyActivityLog.model");
+const WorkoutSession = require("../models/WorkoutSession.model");
 
 // =================================================================
 // 🥘 INGREDIENT DATA
@@ -55,7 +59,7 @@ const seedIngredients = [
     protein_per_100g: 13,
     carbs_per_100g: 1.1,
     fats_per_100g: 11,
-    category: "Protein",
+    category: "Poultry",
     isVerified: true,
   },
   {
@@ -132,7 +136,7 @@ const seedMeals = [
     templateType: "Pre-Workout",
     ingredients: [
       {
-        name: "Sattu Pindi",
+        name: "Sattu Powder",
         quantity: "40g",
         category: "Pantry",
         calories: 155,
@@ -160,7 +164,7 @@ const seedMeals = [
     templateType: "Breakfast",
     ingredients: [
       {
-        name: "Slim Milk",
+        name: "Skimmed Milk",
         quantity: "330g",
         category: "Dairy",
         calories: 115,
@@ -178,7 +182,7 @@ const seedMeals = [
         fats: 15,
       },
       {
-        name: "Oats",
+        name: "Oats (Rolled)",
         quantity: "45g",
         category: "Pantry",
         calories: 170,
@@ -192,105 +196,271 @@ const seedMeals = [
     totalCarbs: 52,
     totalFats: 18.5,
   },
+  {
+    name: "Power Lunch",
+    templateType: "Lunch",
+    ingredients: [
+      {
+        name: "Chicken Breast",
+        quantity: "200g",
+        category: "Meat",
+        calories: 330,
+        protein: 43.2,
+        carbs: 0,
+        fats: 7,
+      },
+      {
+        name: "Soya Chunks (Dry)",
+        quantity: "60g",
+        category: "Pantry",
+        calories: 200,
+        protein: 31.8,
+        carbs: 20,
+        fats: 0.5,
+      },
+    ],
+    totalCalories: 530,
+    totalProtein: 75,
+    totalCarbs: 20,
+    totalFats: 7.5,
+  },
 ];
 
 // =================================================================
-// 🏋️ WORKOUT TEMPLATE DATA
+// 🏋️ NEW, DETAILED WORKOUT TEMPLATE DATA
 // =================================================================
 const seedWorkouts = [
   {
-    name: "Day 1: Upper Body + Core",
+    name: "Day 1: Strength A (Upper Body) + Core",
     type: "Template",
     muscleGroups: ["Upper Body", "Core"],
-    estimatedDuration: 60,
+    estimatedDuration: 90,
     exercises: [
-      { name: "Dumbbell Bench Press", sets: 3, reps: "8-12", rest: 60 },
-      { name: "Overhead Press", sets: 3, reps: "8-12", rest: 60 },
-      { name: "Bent-Over Rows", sets: 3, reps: "8-12", rest: 60 },
-      { name: "Bicep Curls", sets: 3, reps: "10-15", rest: 45 },
       {
-        name: "Plank",
-        sets: 3,
-        reps: "60s",
-        rest: 30,
-        isSupersetWithNext: true,
+        name: "Warm-up: Treadmill Brisk Walk",
+        sets: 1,
+        reps: "3-5 min at 6kmph",
+        rest: 0,
       },
-      { name: "Leg Raises", sets: 3, reps: "15-20", rest: 60 },
-    ],
-  },
-  {
-    name: "Day 2: HIIT + LISS",
-    type: "Template",
-    muscleGroups: ["Cardio", "HIIT"],
-    estimatedDuration: 80,
-    exercises: [
-      { name: "HIIT Session", sets: 1, reps: "25min intervals", rest: 0 },
-      { name: "LISS: Incline Walking", sets: 1, reps: "55min steady", rest: 0 },
-    ],
-  },
-  {
-    name: "Day 3: Lower Body + Core",
-    type: "Template",
-    muscleGroups: ["Lower Body", "Core"],
-    estimatedDuration: 60,
-    exercises: [
-      { name: "Goblet Squats", sets: 4, reps: "10-12", rest: 60 },
-      { name: "Romanian Deadlifts", sets: 3, reps: "8-12", rest: 75 },
-      { name: "Dumbbell Lunges", sets: 3, reps: "10 per leg", rest: 60 },
       {
-        name: "Crunches",
-        sets: 3,
-        reps: "20-25",
-        rest: 30,
-        isSupersetWithNext: true,
+        name: "Warm-up: Arm Circles",
+        sets: 1,
+        reps: "8-12 forward/backward",
+        rest: 15,
       },
-      { name: "Side Planks", sets: 3, reps: "30s per side", rest: 60 },
+      {
+        name: "Warm-up: Torso Twists",
+        sets: 1,
+        reps: "8-12 each side",
+        rest: 15,
+      },
+      { name: "Dumbbell Bench Press", sets: 4, reps: "8-12", rest: 75 },
+      { name: "Dumbbell Overhead Press", sets: 4, reps: "8-12", rest: 75 },
+      { name: "Bent-Over Rows (Dumbbell)", sets: 4, reps: "8-12", rest: 75 },
+      { name: "Lat Pulldowns", sets: 3, reps: "10-15", rest: 60 },
+      { name: "Dumbbell Bicep Curls", sets: 3, reps: "10-15", rest: 60 },
+      { name: "Triceps Pushdowns", sets: 3, reps: "10-15", rest: 60 },
+      { name: "Core: Plank", sets: 3, reps: "45-60s hold", rest: 45 },
+      { name: "Core: Leg Raises", sets: 3, reps: "15-20", rest: 45 },
+      {
+        name: "Core: Russian Twists",
+        sets: 3,
+        reps: "15-20 per side",
+        rest: 45,
+      },
+      { name: "Cool-down: Chest Stretch", sets: 1, reps: "30s", rest: 10 },
+      { name: "Cool-down: Lat Stretch", sets: 1, reps: "30s", rest: 10 },
+      { name: "Cool-down: Child's Pose", sets: 1, reps: "60s", rest: 0 },
     ],
   },
   {
-    name: "Day 4: LISS + Core",
+    name: "Day 2: HIIT + LISS Cardio",
     type: "Template",
-    muscleGroups: ["Cardio", "Core"],
-    estimatedDuration: 80,
-    exercises: [
-      { name: "LISS: Steady Cardio", sets: 1, reps: "55min", rest: 0 },
-      { name: "Reverse Crunches", sets: 3, reps: "15-20", rest: 45 },
-      { name: "Bird Dog", sets: 3, reps: "12 per side", rest: 45 },
-      { name: "Core Circuit", sets: 1, reps: "25min", rest: 0 },
-    ],
-  },
-  {
-    name: "Day 5: Full Body + HIIT (Boss Battle)",
-    type: "Boss Battle",
-    muscleGroups: ["Full Body", "HIIT"],
-    estimatedDuration: 75,
-    exercises: [
-      { name: "Barbell Squats", sets: 3, reps: "8-10", rest: 90 },
-      { name: "Push Press", sets: 3, reps: "8-10", rest: 90 },
-      { name: "Pull-ups", sets: 3, reps: "AMRAP", rest: 90 },
-      { name: "HIIT Finisher", sets: 1, reps: "30min session", rest: 0 },
-    ],
-  },
-  {
-    name: "Day 6: Strength + LISS",
-    type: "Template",
-    muscleGroups: ["Strength", "Cardio"],
+    muscleGroups: ["Cardio", "HIIT", "Endurance"],
     estimatedDuration: 85,
     exercises: [
-      { name: "Main Lift: Bench Press", sets: 5, reps: "5", rest: 120 },
-      { name: "Accessory Lift 1", sets: 3, reps: "10-12", rest: 60 },
-      { name: "Accessory Lift 2", sets: 3, reps: "10-12", rest: 60 },
-      { name: "LISS: Recovery Walk", sets: 1, reps: "25min", rest: 0 },
+      { name: "Warm-up: Light Jog", sets: 1, reps: "5 min", rest: 0 },
+      {
+        name: "HIIT: Sprints/Incline",
+        sets: 8,
+        reps: "60s max effort",
+        rest: 90,
+      },
+      {
+        name: "LISS: Brisk Walk",
+        sets: 1,
+        reps: "50-55 min at 6kmph, 2 incline",
+        rest: 0,
+      },
+      {
+        name: "Cool-down: Quad Stretch",
+        sets: 1,
+        reps: "30s per side",
+        rest: 10,
+      },
+      {
+        name: "Cool-down: Hamstring Stretch",
+        sets: 1,
+        reps: "30s per side",
+        rest: 10,
+      },
+      {
+        name: "Cool-down: Calf Stretch",
+        sets: 1,
+        reps: "30s per side",
+        rest: 0,
+      },
+    ],
+  },
+  {
+    name: "Day 3: Strength B (Lower Body) + Core",
+    type: "Template",
+    muscleGroups: ["Lower Body", "Core"],
+    estimatedDuration: 90,
+    exercises: [
+      {
+        name: "Warm-up: Treadmill Walk + Jacks",
+        sets: 1,
+        reps: "4 min walk, 1 min jacks",
+        rest: 0,
+      },
+      { name: "Warm-up: Bodyweight Squats", sets: 1, reps: "12", rest: 15 },
+      {
+        name: "Warm-up: Leg Swings",
+        sets: 1,
+        reps: "12 each leg/direction",
+        rest: 15,
+      },
+      { name: "Goblet Squats", sets: 4, reps: "8-12", rest: 90 },
+      {
+        name: "Romanian Deadlifts (Dumbbell)",
+        sets: 4,
+        reps: "8-12",
+        rest: 90,
+      },
+      { name: "Lunges", sets: 3, reps: "12 per leg", rest: 75 },
+      { name: "Leg Press", sets: 3, reps: "10-15", rest: 75 },
+      { name: "Core: Crunches", sets: 3, reps: "20-25", rest: 45 },
+      {
+        name: "Core: Bicycle Crunches",
+        sets: 3,
+        reps: "20 per side",
+        rest: 45,
+      },
+      { name: "Core: Side Planks", sets: 3, reps: "60s per side", rest: 45 },
+      { name: "Cool-down: Hamstring Stretch", sets: 1, reps: "30s", rest: 10 },
+      { name: "Cool-down: Quad Stretch", sets: 1, reps: "30s", rest: 10 },
+      {
+        name: "Cool-down: Glute Stretch (Figure-Four)",
+        sets: 1,
+        reps: "30s per side",
+        rest: 0,
+      },
+    ],
+  },
+  {
+    name: "Day 4: LISS (Extended) + Core",
+    type: "Template",
+    muscleGroups: ["Cardio", "Core"],
+    estimatedDuration: 85,
+    exercises: [
+      { name: "Warm-up: Light Walk", sets: 1, reps: "5 min", rest: 0 },
+      {
+        name: "LISS: Brisk Walk",
+        sets: 1,
+        reps: "50-55 min at 6kmph, 2 incline",
+        rest: 0,
+      },
+      { name: "Core: Reverse Crunches", sets: 3, reps: "15-20", rest: 45 },
+      { name: "Core: Cable Crunches", sets: 3, reps: "15-20", rest: 45 },
+      { name: "Core: Bird Dog", sets: 3, reps: "12 per side, slow", rest: 45 },
+      {
+        name: "Cool-down: Hip Flexor Stretch",
+        sets: 1,
+        reps: "30s per side",
+        rest: 10,
+      },
+      { name: "Cool-down: Child's Pose", sets: 1, reps: "60s", rest: 0 },
+    ],
+  },
+  {
+    name: "Day 5: Strength C (Full Body) + HIIT",
+    type: "Boss Battle",
+    muscleGroups: ["Full Body", "HIIT"],
+    estimatedDuration: 90,
+    exercises: [
+      {
+        name: "Warm-up: Jacks & Dynamic Stretches",
+        sets: 1,
+        reps: "5-10 min",
+        rest: 0,
+      },
+      { name: "Goblet Squats", sets: 4, reps: "8-12", rest: 75 },
+      { name: "Dumbbell Bench Press", sets: 4, reps: "8-12", rest: 75 },
+      { name: "Bent-Over Rows (Dumbbell)", sets: 4, reps: "8-12", rest: 75 },
+      { name: "Dumbbell Overhead Press", sets: 4, reps: "8-12", rest: 75 },
+      { name: "HIIT: Sprints", sets: 5, reps: "60s max effort", rest: 90 },
+      { name: "Cool-down: Full Body Stretch", sets: 1, reps: "5 min", rest: 0 },
+    ],
+  },
+  {
+    name: "Day 6: Strength Rotation + LISS",
+    type: "Template",
+    muscleGroups: ["Strength", "Cardio"],
+    estimatedDuration: 90,
+    exercises: [
+      {
+        name: "Warm-up: Choose A, B, or C warm-up",
+        sets: 1,
+        reps: "5-10 min",
+        rest: 0,
+      },
+      {
+        name: "Main Lift 1 (e.g., Repeat Bench Press)",
+        sets: 4,
+        reps: "8-12",
+        rest: 75,
+      },
+      {
+        name: "Main Lift 2 (e.g., Repeat Goblet Squats)",
+        sets: 4,
+        reps: "8-12",
+        rest: 75,
+      },
+      { name: "Accessory Lift (e.g., Rows)", sets: 3, reps: "10-15", rest: 60 },
+      {
+        name: "LISS Cardio",
+        sets: 1,
+        reps: "20-25 min at 6kmph, 2 incline",
+        rest: 0,
+      },
+      {
+        name: "Cool-down: Relevant Stretches",
+        sets: 1,
+        reps: "5 min",
+        rest: 0,
+      },
     ],
   },
   {
     name: "Day 7: Active Recovery",
     type: "Template",
-    muscleGroups: ["Recovery", "Flexibility"],
-    estimatedDuration: 100,
+    muscleGroups: ["Recovery"],
+    estimatedDuration: 90,
     exercises: [
-      { name: "LISS: Long Walk", sets: 1, reps: "80min", rest: 0 },
-      { name: "Full Body Stretching", sets: 1, reps: "20 min", rest: 0 },
+      { name: "Warm-up: Gentle Walk", sets: 1, reps: "5 min", rest: 0 },
+      {
+        name: "LISS: Long Brisk Walk",
+        sets: 1,
+        reps: "80 min at 6kmph, 2 incline",
+        rest: 0,
+      },
+      {
+        name: "Cool-down: Full Body Static Stretch",
+        sets: 1,
+        reps: "5 min",
+        rest: 0,
+      },
     ],
   },
 ];
@@ -299,7 +469,7 @@ const seedDatabase = async () => {
   try {
     await connectDB();
 
-    console.log("[System] Purging old data...");
+    console.log("[System] Purging all old data...");
     await User.deleteMany({});
     await Workout.deleteMany({});
     await WeeklyWorkoutPlan.deleteMany({});
@@ -309,15 +479,20 @@ const seedDatabase = async () => {
     await ExerciseLog.deleteMany({});
     await MealLog.deleteMany({});
     await DailyActivityLog.deleteMany({});
+    await WorkoutSession.deleteMany({});
+    console.log("[System] Data purged.");
 
     console.log("[System] Seeding new data...");
     await Ingredient.insertMany(seedIngredients);
     const createdMeals = await Meal.insertMany(seedMeals);
     const createdWorkouts = await Workout.insertMany(seedWorkouts);
+    console.log(
+      `[System] ${createdWorkouts.length} new workout templates created.`
+    );
 
     // --- Create a Default Weekly Workout Plan ---
-    const defaultWorkoutPlan = await WeeklyWorkoutPlan.create({
-      planName: "Hunter's Standard Week",
+    await WeeklyWorkoutPlan.create({
+      planName: "Hunter's Intensive Week",
       userId: null,
       days: {
         monday: createdWorkouts.find((w) => w.name.includes("Day 1"))._id,
@@ -329,6 +504,7 @@ const seedDatabase = async () => {
         sunday: createdWorkouts.find((w) => w.name.includes("Day 7"))._id,
       },
     });
+    console.log(`[System] Default Weekly Workout Plan created.`);
 
     // --- Create a Default Weekly Meal Plan (from templates) ---
     const breakfastMeal = createdMeals.find(
@@ -340,13 +516,12 @@ const seedDatabase = async () => {
 
     const repeatedDailyPlan = {
       breakfast: breakfastMeal,
-      // These would be custom logged by the user, so we leave them null in the template
       lunch: null,
       dinner: null,
       snacks: [preWorkoutMeal],
     };
 
-    const defaultMealPlan = await WeeklyMealPlan.create({
+    await WeeklyMealPlan.create({
       userId: null,
       weekStartDate: new Date(),
       days: {
@@ -359,6 +534,7 @@ const seedDatabase = async () => {
         sunday: repeatedDailyPlan,
       },
     });
+    console.log(`[System] Default Weekly Meal Plan created.`);
 
     console.log("[System] Seeding complete! Database is ready.");
   } catch (error) {

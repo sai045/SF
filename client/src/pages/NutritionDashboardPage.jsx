@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -9,9 +9,10 @@ import {
   Button,
 } from "../components/common/Styled";
 import MealLoggerModal from "../components/nutrition/MealLoggerModal";
-import { logSteps } from "../api/activity.api";
+import { logSteps, getTodaysActivityLog } from "../api/activity.api";
 import { theme } from "../styles/theme";
 import {
+  FaFire,
   FaAppleAlt,
   FaDrumstickBite,
   FaPizzaSlice,
@@ -59,41 +60,83 @@ const MealTypeCard = styled.div`
 
 function NutritionDashboardPage() {
   const { user, updateUserStats } = useAuth();
+  const [dailyLog, setDailyLog] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState("");
   const [steps, setSteps] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getTodaysActivityLog()
+      .then((data) => {
+        setDailyLog(data);
+        setSteps(data.steps?.count || "");
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   const handleOpenModal = (mealType) => {
     setSelectedMealType(mealType);
     setIsModalOpen(true);
   };
 
-  const handleMealLogged = (response) => {
-    alert(response.message);
-    updateUserStats(response.updatedUserStatus);
+  const handleMealLogged = (updatedDailyLog) => {
+    setDailyLog(updatedDailyLog);
+    // Can add logic here to re-calculate and update global calorie state
   };
 
   const handleLogSteps = async (e) => {
     e.preventDefault();
     const stepCount = parseInt(steps, 10);
     if (isNaN(stepCount) || stepCount < 0) {
-      alert("Please enter a valid number of steps.");
+      toast("Please enter a valid number of steps.");
       return;
     }
     try {
       await logSteps({ stepCount });
-      alert(`${stepCount} steps logged for today!`);
-      setSteps("");
+      toast(`${stepCount} steps logged for today!`);
     } catch (err) {
-      alert("Failed to log steps.");
+      toast("Failed to log steps.");
     }
   };
+
+  if (loading)
+    return (
+      <AppContainer>
+        <h2>Loading Nutrition Log...</h2>
+      </AppContainer>
+    );
+
+  const mealCategories = [
+    "Pre-Workout",
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+    "Snacks",
+  ];
+  const mealIcons = {
+    "Pre-Workout": { icon: <FaFire />, color: "#F39C12" },
+    Breakfast: { icon: <FaAppleAlt />, color: theme.colors.primary },
+    Lunch: { icon: <FaDrumstickBite />, color: theme.colors.danger },
+    Dinner: { icon: <FaPizzaSlice />, color: theme.colors.secondary },
+    Snacks: { icon: <FaGlassWhiskey />, color: theme.colors.accent },
+  };
+
+  // Get the ingredients for the selected meal type to pass to the modal
+  const initialIngredients =
+    dailyLog?.mealsLogged?.find((m) => m.mealType === selectedMealType)
+      ?.ingredients || [];
 
   return (
     <>
       {isModalOpen && (
         <MealLoggerModal
           mealType={selectedMealType}
+          initialIngredients={initialIngredients}
           onClose={() => setIsModalOpen(false)}
           onMealLogged={handleMealLogged}
         />
@@ -156,42 +199,15 @@ function NutritionDashboardPage() {
           Select a meal type to start logging ingredients.
         </p>
         <MealGrid>
-          <MealTypeCard
-            color={theme.colors.primary}
-            onClick={() => handleOpenModal("Breakfast")}
-          >
-            <p>
-              <FaAppleAlt />
-            </p>{" "}
-            <h2>Breakfast</h2>
-          </MealTypeCard>
-          <MealTypeCard
-            color={theme.colors.danger}
-            onClick={() => handleOpenModal("Lunch")}
-          >
-            <p>
-              <FaDrumstickBite />
-            </p>{" "}
-            <h2>Lunch</h2>
-          </MealTypeCard>
-          <MealTypeCard
-            color={theme.colors.secondary}
-            onClick={() => handleOpenModal("Dinner")}
-          >
-            <p>
-              <FaPizzaSlice />
-            </p>{" "}
-            <h2>Dinner</h2>
-          </MealTypeCard>
-          <MealTypeCard
-            color={theme.colors.accent}
-            onClick={() => handleOpenModal("Snacks")}
-          >
-            <p>
-              <FaGlassWhiskey />
-            </p>{" "}
-            <h2>Snacks</h2>
-          </MealTypeCard>
+          {mealCategories.map((mealType) => (
+            <MealTypeCard
+              key={mealType}
+              color={mealIcons[mealType].color}
+              onClick={() => handleOpenModal(mealType)}
+            >
+              <p>{mealIcons[mealType].icon}</p> <h2>{mealType}</h2>
+            </MealTypeCard>
+          ))}
         </MealGrid>
       </AppContainer>
     </>

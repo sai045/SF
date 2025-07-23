@@ -11,6 +11,9 @@ const workoutRoutes = require("./routes/workout.routes");
 const plannerRoutes = require("./routes/planner.routes");
 const mealRoutes = require("./routes/meal.routes");
 const activityRoutes = require("./routes/activity.routes");
+const metricRoutes = require("./routes/metric.routes");
+const sessionRoutes = require("./routes/session.routes");
+const habitRoutes = require("./routes/habit.routes");
 
 const app = express();
 connectDB();
@@ -27,6 +30,9 @@ app.use("/api/workouts", workoutRoutes);
 app.use("/api/planner", plannerRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/metrics", metricRoutes);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/habits", habitRoutes);
 
 // Schedule the job to run once every day at 1:05 AM UTC server time
 cron.schedule(

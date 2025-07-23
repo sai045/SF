@@ -24,3 +24,13 @@ export const logCustomMeal = async (logData) => {
   const response = await apiClient.post("/log_custom", logData);
   return response.data;
 };
+
+export const getMealTemplates = async () => {
+  const response = await apiClient.get("/templates");
+  return response.data;
+};
+
+export const prepareTemplateForLogging = async (templateId) => {
+  const response = await apiClient.post("/templates/prepare", { templateId });
+  return response.data;
+};

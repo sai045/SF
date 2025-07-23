@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { GlobalStyle } from "./styles/GlobalStyle";
 import { theme } from "./styles/theme";
+import { Toaster } from "react-hot-toast";
 
 import Layout from "./components/common/Layout";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -13,6 +14,13 @@ import DashboardPage from "./pages/DashboardPage";
 import WorkoutPage from "./pages/WorkoutPage";
 import NutritionDashboardPage from "./pages/NutritionDashboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import BodyMetricsPage from "./pages/BodyMetricsPage";
+import WorkoutStartPage from "./pages/WorkoutStartPage";
+import WorkoutHistoryListPage from "./pages/WorkoutHistoryListPage";
+import WorkoutLogDetailPage from "./pages/WorkoutLogDetailPage";
+import AchievementsPage from "./pages/AchievementsPage";
+import MyWorkoutsPage from "./pages/MyWorkoutsPage";
+import WorkoutBuilderPage from "./pages/WorkoutBuilderPage";
 
 function App() {
   const location = useLocation();
@@ -20,6 +28,16 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          style: {
+            background: theme.colors.cardBackgroundSolid,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.primary}`,
+          },
+        }}
+      />
       {["/login", "/register"].includes(location.pathname) ? (
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -60,7 +78,71 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/profile/metrics"
+              element={
+                <ProtectedRoute>
+                  <BodyMetricsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout/start/:workoutId"
+              element={
+                <ProtectedRoute>
+                  <WorkoutStartPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout/session/:sessionId"
+              element={
+                <ProtectedRoute>
+                  <WorkoutPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/history/workouts"
+              element={
+                <ProtectedRoute>
+                  <WorkoutHistoryListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/history/workouts/:logId"
+              element={
+                <ProtectedRoute>
+                  <WorkoutLogDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/achievements"
+              element={
+                <ProtectedRoute>
+                  <AchievementsPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
+          <Route
+            path="/workouts"
+            element={
+              <ProtectedRoute>
+                <MyWorkoutsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workouts/create"
+            element={
+              <ProtectedRoute>
+                <WorkoutBuilderPage />
+              </ProtectedRoute>
+            }
+          />
         </Layout>
       )}
     </ThemeProvider>

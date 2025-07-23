@@ -24,3 +24,18 @@ export const getUserProfile = async () => {
   const response = await apiClient.get("/profile");
   return response.data;
 };
+
+export const getProfileStats = async () => {
+  const response = await apiClient.get("/profile/stats");
+  return response.data;
+};
+
+export const getAchievements = async () => {
+  const response = await apiClient.get("/achievements");
+  return response.data;
+};
+
+export const setActiveTitle = async (titleKey) => {
+  const response = await apiClient.put("/profile/title", { titleKey });
+  return response.data;
+};

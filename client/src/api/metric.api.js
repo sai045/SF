@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/activity";
+const API_URL = "http://localhost:5001/api/metrics";
 
 const apiClient = axios.create({ baseURL: API_URL });
 
@@ -15,17 +15,12 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export const logSteps = async (stepsData) => {
-  const response = await apiClient.post("/steps", stepsData);
+export const logBodyMetric = async (metricData) => {
+  const response = await apiClient.post("/", metricData);
   return response.data;
 };
 
-export const getTodaysActivityLog = async () => {
-  const response = await apiClient.get("/today");
-  return response.data;
-};
-
-export const updateMealInLog = async (mealData) => {
-  const response = await apiClient.post("/meals", mealData);
+export const getBodyMetricsHistory = async () => {
+  const response = await apiClient.get("/");
   return response.data;
 };

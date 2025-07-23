@@ -32,3 +32,23 @@ export const getExerciseHistory = async (exerciseName) => {
   );
   return response.data;
 };
+
+export const getWorkoutHistoryList = async () => {
+  const response = await apiClient.get("/history/all");
+  return response.data;
+};
+
+export const getWorkoutLogDetails = async (logId) => {
+  const response = await apiClient.get(`/history/log/${logId}`);
+  return response.data;
+};
+
+export const createCustomWorkout = async (workoutData) => {
+  const response = await apiClient.post("/custom", workoutData);
+  return response.data;
+};
+
+export const getMyWorkouts = async () => {
+  const response = await apiClient.get("/custom");
+  return response.data;
+};

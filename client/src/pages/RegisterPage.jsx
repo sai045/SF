@@ -27,7 +27,7 @@ function RegisterPage() {
     setLoading(true);
     try {
       await register(username, email, password);
-      navigate("/");
+      navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to register.");
     } finally {

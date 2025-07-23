@@ -1,5 +1,31 @@
 const mongoose = require("mongoose");
 
+// Sub-schema for an ingredient logged by the user
+const loggedIngredientSchema = new mongoose.Schema(
+  {
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
+    weightInGrams: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
+// Sub-schema for a specific meal (e.g., Breakfast)
+const loggedMealSchema = new mongoose.Schema(
+  {
+    mealType: {
+      type: String,
+      enum: ["Pre-Workout", "Breakfast", "Lunch", "Dinner", "Snacks"],
+      required: true,
+    },
+    ingredients: [loggedIngredientSchema],
+  },
+  { _id: false }
+);
+
 const dailyActivityLogSchema = new mongoose.Schema(
   {
     userId: {
@@ -8,6 +34,7 @@ const dailyActivityLogSchema = new mongoose.Schema(
       required: true,
     },
     date: { type: Date, required: true, index: true },
+    mealsLogged: [loggedMealSchema],
     steps: {
       count: { type: Number, default: 0 },
       goal: { type: Number, default: 8000 },

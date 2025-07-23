@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { theme } from "../../styles/theme";
 import { Input, Button } from "../common/Styled";
-import { searchIngredients, logCustomMeal } from "../../api/meal.api.js";
-
-// Custom debounce hook to prevent API calls on every keystroke
-const useDebounce = (value, delay) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-};
+import {
+  searchIngredients,
+  getMealTemplates,
+  prepareTemplateForLogging,
+} from "../../api/meal.api.js";
+import { updateMealInLog } from "../../api/activity.api.js";
+import useDebounce from "../../hooks/useDebounce";
+import { useAuth } from "../../context/AuthContext";
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -38,17 +31,29 @@ const ModalContent = styled.div`
   border: 1px solid ${theme.colors.primary};
   border-radius: 8px;
   width: 90%;
-  max-width: 600px;
+  max-width: 700px;
   max-height: 90vh;
-  overflow-y: auto;
-  padding: 2rem;
   display: flex;
   flex-direction: column;
+`;
 
+const ModalHeader = styled.div`
+  padding: 1.5rem;
+  border-bottom: 1px solid ${theme.colors.cardBackgroundSolid};
   h2 {
     text-align: center;
-    margin-bottom: 2rem;
   }
+`;
+
+const ModalBody = styled.div`
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+`;
+
+const ModalFooter = styled.div`
+  padding: 1.5rem;
+  border-top: 1px solid ${theme.colors.cardBackgroundSolid};
 `;
 
 const SearchResultsContainer = styled.div`
@@ -58,24 +63,16 @@ const SearchResultsContainer = styled.div`
   margin-bottom: 1rem;
   max-height: 200px;
   overflow-y: auto;
+  background: ${theme.colors.cardBackgroundSolid};
 `;
 
 const SearchResult = styled.div`
   padding: 0.75rem;
   cursor: pointer;
-  border-bottom: 1px solid ${theme.colors.cardBackgroundSolid};
-
-  &:last-child {
-    border-bottom: none;
-  }
-
+  border-bottom: 1px solid ${theme.colors.background};
   &:hover {
     background-color: ${theme.colors.cardBackground};
   }
-`;
-
-const SelectedItemsContainer = styled.div`
-  flex-grow: 1;
 `;
 
 const SelectedItem = styled.div`
@@ -83,23 +80,70 @@ const SelectedItem = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
+  padding: 0.75rem 0;
   border-bottom: 1px solid ${theme.colors.cardBackgroundSolid};
-
   span {
     flex-basis: 50%;
     word-break: break-word;
   }
 `;
 
-function MealLoggerModal({ mealType, onClose, onMealLogged }) {
+const TemplateSelect = styled.select`
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 1rem;
+  background: ${theme.colors.cardBackground};
+  color: ${theme.colors.text};
+  border: 1px solid ${theme.colors.textMuted};
+  border-radius: 4px;
+`;
+
+const SummaryRow = styled.div`
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  padding: 1rem;
+  background-color: ${theme.colors.cardBackground};
+  border-radius: 4px;
+  margin-top: 1rem;
+`;
+
+const SummaryItem = styled.div`
+  h4 {
+    color: ${theme.colors.accent};
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  p {
+    font-size: 0.8rem;
+    color: ${theme.colors.textMuted};
+    margin: 0;
+  }
+`;
+
+function MealLoggerModal({ mealType, initialIngredients = [], onClose }) {
+  const { refreshDashboardSummary } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [mealTemplates, setMealTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  useEffect(() => {
+    getMealTemplates().then(setMealTemplates);
+  }, []);
+
+  useEffect(() => {
+    const initialItems = initialIngredients.map((ing) => ({
+      ingredientId: ing.ingredientId._id,
+      name: ing.ingredientId.name,
+      weightInGrams: ing.weightInGrams,
+      ...ing.ingredientId,
+    }));
+    setSelectedItems(initialItems);
+  }, [initialIngredients]);
 
   useEffect(() => {
     if (debouncedSearchTerm) {
@@ -109,13 +153,36 @@ function MealLoggerModal({ mealType, onClose, onMealLogged }) {
     }
   }, [debouncedSearchTerm]);
 
+  const handleQuickAddTemplate = async (templateId) => {
+    if (!templateId) return;
+    setLoading(true);
+    try {
+      const preparedIngredients = await prepareTemplateForLogging(templateId);
+      const newItems = [...selectedItems];
+      preparedIngredients.forEach((prepIng) => {
+        if (
+          !newItems.find((item) => item.ingredientId === prepIng.ingredientId)
+        ) {
+          newItems.push(prepIng);
+        }
+      });
+      setSelectedItems(newItems);
+    } catch (error) {
+      toast(
+        "Error adding template. Some ingredients may not exist in the master list."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSelectIngredient = (ingredient) => {
     if (!selectedItems.find((item) => item.ingredientId === ingredient._id)) {
       setSelectedItems([
         ...selectedItems,
         {
+          ...ingredient,
           ingredientId: ingredient._id,
-          name: ingredient.name,
           weightInGrams: 100,
         },
       ]);
@@ -140,88 +207,155 @@ function MealLoggerModal({ mealType, onClose, onMealLogged }) {
     setLoading(true);
     const payload = {
       mealType,
-      loggedIngredients: selectedItems.map(
-        ({ ingredientId, weightInGrams }) => ({ ingredientId, weightInGrams })
-      ),
+      ingredients: selectedItems.map(({ ingredientId, weightInGrams }) => ({
+        ingredientId,
+        weightInGrams,
+      })),
     };
     try {
-      const response = await logCustomMeal(payload);
-      onMealLogged(response);
+      await updateMealInLog(payload);
+      await refreshDashboardSummary();
       onClose();
     } catch (err) {
-      alert("Failed to log meal.");
+      toast("Failed to log meal.");
       setLoading(false);
     }
   };
 
+  const mealSummary = useMemo(() => {
+    return selectedItems.reduce(
+      (acc, item) => {
+        const multiplier = item.weightInGrams / 100;
+        acc.calories += (item.calories_per_100g || 0) * multiplier;
+        acc.protein += (item.protein_per_100g || 0) * multiplier;
+        acc.carbs += (item.carbs_per_100g || 0) * multiplier;
+        acc.fats += (item.fats_per_100g || 0) * multiplier;
+        return acc;
+      },
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
+  }, [selectedItems]);
+
   return (
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
-        <h2>Log {mealType}</h2>
-        <Input
-          type="text"
-          placeholder="Search for a food..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        {searchResults.length > 0 && (
-          <SearchResultsContainer>
-            {searchResults.map((ing) => (
-              <SearchResult
-                key={ing._id}
-                onClick={() => handleSelectIngredient(ing)}
-              >
-                {ing.name}
-              </SearchResult>
-            ))}
-          </SearchResultsContainer>
-        )}
+        <ModalHeader>
+          <h2>Log {mealType}</h2>
+        </ModalHeader>
+        <ModalBody>
+          <div>
+            <h4>Quick Add</h4>
+            <TemplateSelect
+              onChange={(e) => handleQuickAddTemplate(e.target.value)}
+              disabled={loading}
+            >
+              <option value="">Select a template...</option>
+              {mealTemplates
+                .filter(
+                  (t) =>
+                    t.templateType === mealType || t.templateType === "Snacks"
+                )
+                .map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.name}
+                  </option>
+                ))}
+            </TemplateSelect>
+          </div>
+          <hr
+            style={{
+              margin: "1.5rem 0",
+              border: `1px solid ${theme.colors.cardBackgroundSolid}`,
+            }}
+          />
+          <div>
+            <h4>Add Ingredients Manually</h4>
+            <Input
+              type="text"
+              placeholder="Search for a food..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchResults.length > 0 && (
+              <SearchResultsContainer>
+                {searchResults.map((ing) => (
+                  <SearchResult
+                    key={ing._id}
+                    onClick={() => handleSelectIngredient(ing)}
+                  >
+                    {ing.name}
+                  </SearchResult>
+                ))}
+              </SearchResultsContainer>
+            )}
+          </div>
 
-        <SelectedItemsContainer>
-          <h3>Your Meal</h3>
-          {selectedItems.length === 0 && (
-            <p style={{ color: theme.colors.textMuted, textAlign: "center" }}>
-              Add ingredients from the search bar above.
-            </p>
-          )}
-          {selectedItems.map((item, index) => (
-            <SelectedItem key={item.ingredientId}>
-              <span>{item.name}</span>
-              <div>
-                <Input
-                  type="number"
-                  value={item.weightInGrams}
-                  onChange={(e) => handleWeightChange(index, e.target.value)}
+          <div>
+            <h3>Your Meal Items</h3>
+            {selectedItems.length === 0 && (
+              <p style={{ color: theme.colors.textMuted, textAlign: "center" }}>
+                Add ingredients from the search bar above.
+              </p>
+            )}
+            {selectedItems.map((item, index) => (
+              <SelectedItem key={item.ingredientId}>
+                <span>{item.name}</span>
+                <div>
+                  <Input
+                    type="number"
+                    value={item.weightInGrams}
+                    onChange={(e) => handleWeightChange(index, e.target.value)}
+                    style={{
+                      width: "80px",
+                      margin: "0 0.5rem",
+                      padding: "0.5rem",
+                    }}
+                  />
+                  <span>g</span>
+                </div>
+                <Button
+                  onClick={() => handleRemoveItem(item.ingredientId)}
                   style={{
-                    width: "80px",
-                    margin: "0 0.5rem",
+                    width: "auto",
                     padding: "0.5rem",
+                    fontSize: "0.8rem",
+                    background: theme.colors.danger,
                   }}
-                />
-                <span>g</span>
-              </div>
-              <Button
-                onClick={() => handleRemoveItem(item.ingredientId)}
-                style={{
-                  width: "auto",
-                  padding: "0.5rem",
-                  fontSize: "0.8rem",
-                  background: theme.colors.danger,
-                }}
-              >
-                X
-              </Button>
-            </SelectedItem>
-          ))}
-        </SelectedItemsContainer>
+                >
+                  X
+                </Button>
+              </SelectedItem>
+            ))}
+          </div>
 
-        <Button
-          onClick={handleLog}
-          disabled={loading || selectedItems.length === 0}
-          style={{ marginTop: "2rem", width: "100%" }}
-        >
-          {loading ? "LOGGING..." : `LOG MEAL`}
-        </Button>
+          <SummaryRow>
+            <SummaryItem>
+              <h4>{Math.round(mealSummary.calories)}</h4>
+              <p>KCAL</p>
+            </SummaryItem>
+            <SummaryItem>
+              <h4>{Math.round(mealSummary.protein)}g</h4>
+              <p>PROTEIN</p>
+            </SummaryItem>
+            <SummaryItem>
+              <h4>{Math.round(mealSummary.carbs)}g</h4>
+              <p>CARBS</p>
+            </SummaryItem>
+            <SummaryItem>
+              <h4>{Math.round(mealSummary.fats)}g</h4>
+              <p>FATS</p>
+            </SummaryItem>
+          </SummaryRow>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            onClick={handleLog}
+            disabled={loading || selectedItems.length === 0}
+            style={{ width: "100%" }}
+          >
+            {loading ? "SAVING..." : `SAVE ${mealType.toUpperCase()}`}
+          </Button>
+        </ModalFooter>
       </ModalContent>
     </ModalOverlay>
   );

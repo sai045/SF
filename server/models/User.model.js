@@ -56,6 +56,13 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "WeeklyMealPlan",
     },
+    unlockedAchievements: [
+      {
+        key: { type: String, required: true },
+        name: { type: String, required: true },
+        unlockedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

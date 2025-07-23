@@ -65,7 +65,7 @@ function ProfileSetupWizard() {
       setUser(updatedUser);
       // The modal will disappear automatically from Layout because the condition to show it will now be false
     } catch (error) {
-      alert("Failed to setup profile. Please fill all fields.");
+      toast("Failed to setup profile. Please fill all fields.");
       setLoading(false);
     }
   };

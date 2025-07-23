@@ -57,7 +57,7 @@ const checkAndApplyLevelUp = async (userId) => {
 
 const checkForPR = async (userId, exerciseName, newWeight, newReps) => {
   try {
-    const newE1RM = calculateE1RM(newWeight, newRps);
+    const newE1RM = calculateE1RM(newWeight, newReps);
 
     const historicalBests = await ExerciseLog.aggregate([
       { $match: { userId: new mongoose.Types.ObjectId(userId), exerciseName } },

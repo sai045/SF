@@ -7,6 +7,7 @@ const {
   checkAndApplyLevelUp,
   checkForPR,
 } = require("../utils/gamification");
+const { checkAchievements } = require("../utils/achievements");
 
 const getWorkoutById = async (req, res) => {
   try {
@@ -94,6 +95,12 @@ const logWorkout = async (req, res) => {
     user.exp += expGained;
     const updatedUser = await checkAndApplyLevelUp(user._id);
 
+    await checkAchievements(userId, "WORKOUT_LOGGED", { setsLogged });
+
+    if (prCount > 0) {
+      await checkAchievements(userId, "PR_HIT", {});
+    }
+
     res.status(201).json({
       message: `[System] Quest Complete! Workout logged. You gained ${expGained} EXP and hit ${prCount} PR(s)!`,
       log: newWorkoutLog,
@@ -106,13 +113,97 @@ const logWorkout = async (req, res) => {
       },
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Server error while logging workout.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Server error while logging workout.",
+      error: error.message,
+    });
   }
 };
 
-module.exports = { getWorkoutById, logWorkout, getExerciseHistory };
+// @desc    Get a list of all historical workout logs for a user
+// @route   GET /api/workouts/history/all
+// @access  Private
+const getWorkoutHistoryList = async (req, res) => {
+  try {
+    const history = await WorkoutLog.find({ userId: req.user.id })
+      .populate("workoutId", "name type bossName") // Populate with workout name and type
+      .sort({ date: -1 }); // Most recent first
+
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ message: "Server error fetching workout history." });
+  }
+};
+
+// @desc    Get the full details of a single historical workout log
+// @route   GET /api/workouts/history/log/:logId
+// @access  Private
+const getWorkoutLogDetails = async (req, res) => {
+  try {
+    const log = await WorkoutLog.findById(req.params.logId).populate(
+      "workoutId"
+    ); // Get full workout template details
+
+    // Security check: ensure the log belongs to the requesting user
+    if (!log || log.userId.toString() !== req.user.id) {
+      return res.status(404).json({ message: "Workout log not found." });
+    }
+
+    res.json(log);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error fetching workout log details." });
+  }
+};
+
+// @desc    Create a new custom workout routine
+// @route   POST /api/workouts/custom
+// @access  Private
+const createCustomWorkout = async (req, res) => {
+  const { name, description, exercises } = req.body;
+  const userId = req.user.id;
+
+  if (!name || !exercises || exercises.length === 0) {
+    return res
+      .status(400)
+      .json({
+        message: "Workout name and at least one exercise are required.",
+      });
+  }
+
+  try {
+    const newWorkout = await Workout.create({
+      name,
+      description,
+      exercises,
+      createdBy: userId, // Link this workout to the user
+      type: "Normal", // User-created workouts are 'Normal' by default
+    });
+    res.status(201).json(newWorkout);
+  } catch (error) {
+    res.status(500).json({ message: "Server error creating custom workout." });
+  }
+};
+
+// @desc    Get all custom workouts created by the user
+// @route   GET /api/workouts/custom
+// @access  Private
+const getMyWorkouts = async (req, res) => {
+  try {
+    const myWorkouts = await Workout.find({ createdBy: req.user.id });
+    res.json(myWorkouts);
+  } catch (error) {
+    res.status(500).json({ message: "Server error fetching custom workouts." });
+  }
+};
+
+module.exports = {
+  getWorkoutById,
+  logWorkout,
+  getExerciseHistory,
+  getWorkoutHistoryList,
+  getWorkoutLogDetails,
+  createCustomWorkout,
+  getMyWorkouts,
+};

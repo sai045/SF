@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Input, Button } from "../common/Styled";
 import { theme } from "../../styles/theme";
 import { getExerciseHistory } from "../../api/workout.api.js";
+import { FaEdit, FaCheck } from "react-icons/fa";
 
 const ExerciseCard = styled.div`
   background-color: ${theme.colors.cardBackground};
@@ -30,7 +31,10 @@ const SetRow = styled.div`
   margin-bottom: 1rem;
   background-color: ${(props) =>
     props.isLogged ? `rgba(0, 168, 255, 0.1)` : "rgba(0,0,0,0.2)"};
+  border-left: 3px solid
+    ${(props) => (props.isLogged ? theme.colors.primary : "transparent")};
   border-radius: 4px;
+  transition: all 0.2s ease-in-out;
 
   span {
     font-weight: bold;
@@ -43,29 +47,44 @@ const SetInput = styled(Input)`
   width: 80px;
   margin: 0;
   text-align: center;
+  &:disabled {
+    background-color: transparent;
+    border-color: transparent;
+    color: ${theme.colors.text};
+  }
 `;
 
-function ActiveExercise({ exercise, onSetComplete }) {
+const LogButton = styled(Button)`
+  width: auto;
+  padding: 0.8rem 1.5rem;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+`;
+
+function ActiveExercise({ exercise, onSetUpdate, initialLogs }) {
   const [setsData, setSetsData] = useState([]);
   const [lastPerformance, setLastPerformance] = useState(null);
 
   useEffect(() => {
-    // Fetch last performance when the exercise changes
     getExerciseHistory(exercise.name)
-      .then((data) => {
-        setLastPerformance(data);
-      })
+      .then((data) => setLastPerformance(data))
       .catch((err) => console.error("Could not fetch exercise history", err));
 
-    // Initialize state for each set
-    const initialSets = Array.from({ length: exercise.sets }, (_, i) => ({
-      setNumber: i + 1,
-      weight: "",
-      reps: "",
-      isLogged: false,
-    }));
+    // Initialize sets, using existing logs if provided (for editing a workout in progress)
+    const initialSets = Array.from({ length: exercise.sets }, (_, i) => {
+      const existingLog = initialLogs.find((log) => log.setNumber === i + 1);
+      return {
+        setNumber: i + 1,
+        weight: existingLog?.weight || "",
+        reps: existingLog?.reps || "",
+        isLogged: !!existingLog,
+      };
+    });
     setSetsData(initialSets);
-  }, [exercise]);
+  }, [exercise, initialLogs]);
 
   const handleInputChange = (index, field, value) => {
     const newSetsData = [...setsData];
@@ -73,16 +92,30 @@ function ActiveExercise({ exercise, onSetComplete }) {
     setSetsData(newSetsData);
   };
 
-  const handleLogSet = (index) => {
+  const handleToggleLog = (index) => {
     const newSetsData = [...setsData];
-    newSetsData[index].isLogged = true;
+    const currentSet = newSetsData[index];
+
+    // If toggling to "logged" state, validate first
+    if (!currentSet.isLogged) {
+      const weight = parseFloat(currentSet.weight);
+      const reps = parseInt(currentSet.reps, 10);
+      if (isNaN(weight) || isNaN(reps) || weight < 0 || reps < 0) {
+        toast("Please enter valid numbers for weight and reps.");
+        return;
+      }
+    }
+
+    // Toggle the logged state
+    currentSet.isLogged = !currentSet.isLogged;
     setSetsData(newSetsData);
 
-    onSetComplete({
+    // Inform the parent component (WorkoutPage) of the update
+    onSetUpdate({
       exerciseName: exercise.name,
-      setNumber: newSetsData[index].setNumber,
-      weight: newSetsData[index].weight,
-      reps: newSetsData[index].reps,
+      setNumber: currentSet.setNumber,
+      weight: currentSet.weight,
+      reps: currentSet.reps,
     });
   };
 
@@ -118,17 +151,25 @@ function ActiveExercise({ exercise, onSetComplete }) {
               onChange={(e) => handleInputChange(index, "reps", e.target.value)}
               disabled={set.isLogged}
             />
-            <Button
-              onClick={() => handleLogSet(index)}
-              disabled={set.isLogged || !set.weight || !set.reps}
+            <LogButton
+              onClick={() => handleToggleLog(index)}
+              disabled={!set.isLogged && (!set.weight || !set.reps)}
               style={{
-                width: "auto",
-                padding: "0.8rem 1.5rem",
-                minWidth: "120px",
+                backgroundColor: set.isLogged
+                  ? theme.colors.accent
+                  : theme.colors.primary,
               }}
             >
-              {set.isLogged ? "LOGGED" : "LOG SET"}
-            </Button>
+              {set.isLogged ? (
+                <>
+                  <FaEdit /> EDIT
+                </>
+              ) : (
+                <>
+                  <FaCheck /> LOG SET
+                </>
+              )}
+            </LogButton>
           </SetRow>
         ))}
       </div>

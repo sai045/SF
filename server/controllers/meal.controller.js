@@ -21,11 +21,9 @@ const getTodaysMealPlan = async (req, res) => {
 // @access  Private
 const logMeal = async (req, res) => {
   // This can be adapted for a "quick-add" feature in the future
-  res
-    .status(400)
-    .json({
-      message: "This route is for template logging. Please use /log_custom.",
-    });
+  res.status(400).json({
+    message: "This route is for template logging. Please use /log_custom.",
+  });
 };
 
 // @desc    Search for ingredients in the master database
@@ -117,9 +115,87 @@ const logCustomMeal = async (req, res) => {
   }
 };
 
+// @desc    Get all meal templates
+// @route   GET /api/meals/templates
+const getMealTemplates = async (req, res) => {
+  try {
+    // Fetch templates created by admin (createdBy: null) or the user
+    const templates = await Meal.find({
+      $or: [{ createdBy: null }, { createdBy: req.user.id }],
+    });
+    res.json(templates);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching meal templates" });
+  }
+};
+
+// @desc    Get a single meal template with ingredients
+// @route   GET /api/meals/templates/:id
+const getMealTemplateById = async (req, res) => {
+  try {
+    const template = await Meal.findById(req.params.id);
+    if (!template)
+      return res.status(404).json({ message: "Template not found" });
+    res.json(template);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching template" });
+  }
+};
+
+// @desc    Prepares a meal template's ingredients for logging
+// @route   POST /api/meals/templates/prepare
+const prepareTemplateForLogging = async (req, res) => {
+  const { templateId } = req.body;
+  try {
+    const template = await Meal.findById(templateId);
+    if (!template)
+      return res.status(404).json({ message: "Template not found" });
+
+    // Get all ingredient names from the template
+    const ingredientNames = template.ingredients.map((ing) => ing.name);
+
+    // Find the corresponding master Ingredient documents
+    const masterIngredients = await Ingredient.find({
+      name: { $in: ingredientNames },
+    });
+    const masterIngredientMap = new Map(
+      masterIngredients.map((i) => [i.name, i])
+    );
+
+    // Build the response payload for the meal logger
+    const preparedIngredients = template.ingredients
+      .map((templateIng) => {
+        const masterIng = masterIngredientMap.get(templateIng.name);
+        if (!masterIng) return null; // Ingredient not found in master list
+
+        // We need to parse the quantity string (e.g., "30g") to a number
+        const weightInGrams =
+          parseInt(templateIng.quantity.replace("g", ""), 10) || 100;
+
+        return {
+          ingredientId: masterIng._id,
+          name: masterIng.name,
+          weightInGrams: weightInGrams,
+          // Pass full nutritional data for live calculation on the frontend
+          ...masterIng.toObject(),
+        };
+      })
+      .filter(Boolean); // Filter out any nulls
+
+    res.json(preparedIngredients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error preparing template", error: error.message });
+  }
+};
+
 module.exports = {
   getTodaysMealPlan,
   logMeal,
   searchIngredients,
+  getMealTemplates,
+  getMealTemplateById,
   logCustomMeal,
+  prepareTemplateForLogging,
 };

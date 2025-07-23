@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/activity";
+const API_URL = "http://localhost:5001/api/habits";
 
 const apiClient = axios.create({ baseURL: API_URL });
 
@@ -15,17 +15,17 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export const logSteps = async (stepsData) => {
-  const response = await apiClient.post("/steps", stepsData);
+export const getHabits = async () => {
+  const response = await apiClient.get("/");
   return response.data;
 };
 
-export const getTodaysActivityLog = async () => {
-  const response = await apiClient.get("/today");
+export const createHabit = async (name) => {
+  const response = await apiClient.post("/", { name });
   return response.data;
 };
 
-export const updateMealInLog = async (mealData) => {
-  const response = await apiClient.post("/meals", mealData);
+export const checkinHabit = async (habitId) => {
+  const response = await apiClient.post(`/${habitId}/checkin`);
   return response.data;
 };
