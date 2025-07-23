@@ -126,23 +126,23 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/workouts"
+              element={
+                <ProtectedRoute>
+                  <MyWorkoutsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workouts/create"
+              element={
+                <ProtectedRoute>
+                  <WorkoutBuilderPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
-          <Route
-            path="/workouts"
-            element={
-              <ProtectedRoute>
-                <MyWorkoutsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/workouts/create"
-            element={
-              <ProtectedRoute>
-                <WorkoutBuilderPage />
-              </ProtectedRoute>
-            }
-          />
         </Layout>
       )}
     </ThemeProvider>

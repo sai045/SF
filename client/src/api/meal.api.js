@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/meals";
+const API_URL = `https://solo-fit-server.onrender.com/api/meals`;
 
 const apiClient = axios.create({ baseURL: API_URL });
 

@@ -9,6 +9,7 @@ import {
   FaDumbbell,
   FaUser,
   FaSignOutAlt,
+  FaBook,
 } from "react-icons/fa";
 
 const NavContainer = styled.nav`

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useAuth } from "../context/AuthContext";
-import { getDashboardData } from "../api/planner.api";
 import { AppContainer, Title } from "../components/common/Styled";
 import DailyQuestItem from "../components/planner/DailyQuestItem";
 import styled from "styled-components";
@@ -42,48 +41,22 @@ const CalorieDisplay = styled.div`
 `;
 
 function DashboardPage() {
-  const { user, logout, dashboardSummary } = useAuth();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // 1. Get all necessary data directly from the context.
+  //    This is our single source of truth. No need for extra state here.
+  const { user, dashboardSummary } = useAuth();
 
-  if (!dashboardSummary)
+  // 2. The loading state is now also derived from the context.
+  //    If dashboardSummary doesn't exist yet, we show a spinner.
+  //    This check happens AFTER all hook calls, which is correct.
+  if (!dashboardSummary) {
     return (
-      <AppContainer>
+      <AppContainer style={{ justifyContent: "center" }}>
         <LoadingSpinner />
       </AppContainer>
     );
+  }
 
-  useEffect(() => {
-    getDashboardData()
-      .then((data) => {
-        setDashboardData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        if (err.response && err.response.status === 401) {
-          logout();
-        } else {
-          // Handle other errors (e.g., show a notification)
-          console.error("Failed to load dashboard data:", err);
-        }
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading)
-    return (
-      <AppContainer>
-        <h2>[ SYSTEM LOADING DASHBOARD... ]</h2>
-      </AppContainer>
-    );
-  if (!dashboardData)
-    return (
-      <AppContainer>
-        <h2>Could not load dashboard data.</h2>
-      </AppContainer>
-    );
-
+  // 3. Destructure the data *after* the loading check.
   const { caloriesIn, estimatedTDEE, todaysWorkoutQuest } = dashboardSummary;
   const balance = caloriesIn - estimatedTDEE;
 

@@ -2,7 +2,7 @@ import React from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../../styles/theme";
 import { Button } from "./Styled";
-import { playLevelUpSound } from "../utils/sounds";
+import { playLevelUpSound } from "../../utils/sounds";
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(0.8); }

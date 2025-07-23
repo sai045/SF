@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://localhost:5001/api/metrics";
+const API_URL = `https://solo-fit-server.onrender.com/api/metrics`;
 
 const apiClient = axios.create({ baseURL: API_URL });
 
