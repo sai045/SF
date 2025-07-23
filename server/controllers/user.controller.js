@@ -8,6 +8,7 @@ const { calculateBMR } = require("../utils/fitnessCalculator");
 const WorkoutLog = require("../models/WorkoutLog.model");
 const ExerciseLog = require("../models/ExerciseLog.model");
 const { ALL_ACHIEVEMENTS } = require("../utils/achievements");
+const mongoose = require("mongoose");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {

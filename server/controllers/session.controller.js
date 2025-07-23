@@ -1,6 +1,6 @@
 const WorkoutSession = require("../models/WorkoutSession.model");
 const Workout = require("../models/Workout.model");
-const { logWorkout } = require("./workout.controller"); // We'll call the original log function at the end
+const { createPermanentWorkoutLog } = require("./workout.controller"); // We'll call the original log function at the end
 
 // @desc    Start a new workout session
 // @route   POST /api/sessions/start
@@ -89,8 +89,15 @@ const finishWorkoutSession = async (req, res) => {
       setsLogged: session.setsLogged,
     };
 
+    const result = await createPermanentWorkoutLog(
+      req.user.id,
+      session.workoutId,
+      duration,
+      session.setsLogged
+    );
+
     // Pass the request and response objects to the logWorkout controller
-    return logWorkout(req, res);
+    return res.status(201).json(result);
   } catch (error) {
     res
       .status(500)

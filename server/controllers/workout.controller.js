@@ -33,90 +33,112 @@ const getExerciseHistory = async (req, res) => {
   }
 };
 
-const logWorkout = async (req, res) => {
-  const { workoutId, duration, setsLogged } = req.body;
-  const userId = req.user.id;
-  if (!workoutId || !setsLogged) {
-    return res
-      .status(400)
-      .json({ message: "Workout ID and logged sets are required." });
+const createPermanentWorkoutLog = async (
+  userId,
+  workoutId,
+  duration,
+  setsLogged
+) => {
+  const workoutTemplate = await Workout.findById(workoutId);
+  if (!workoutTemplate) throw new Error("Workout template not found.");
+
+  let expGained = gameConfig.EXP.WORKOUT_COMPLETE_BASE;
+  if (workoutTemplate.type === "Boss Battle") {
+    expGained *= gameConfig.EXP.BOSS_BATTLE_MULTIPLIER;
   }
 
-  try {
-    const workoutTemplate = await Workout.findById(workoutId);
-    if (!workoutTemplate)
-      return res.status(404).json({ message: "Workout template not found." });
+  // Create the parent WorkoutLog to get its ID
+  const newWorkoutLog = await WorkoutLog.create({
+    userId,
+    workoutId,
+    duration,
+    setsLogged,
+  });
 
-    let expGained = gameConfig.EXP.WORKOUT_COMPLETE_BASE;
-    if (workoutTemplate.type === "Boss Battle") {
-      expGained *= gameConfig.EXP.BOSS_BATTLE_MULTIPLIER;
-    }
+  const exerciseLogsToCreate = [];
+  let prCount = 0;
 
-    const newWorkoutLog = await WorkoutLog.create({
-      userId,
-      workoutId,
-      duration,
-      setsLogged,
-    });
+  for (const set of setsLogged) {
+    const weight = parseFloat(set.weight);
+    const reps = parseInt(set.reps, 10);
+    if (isNaN(weight) || isNaN(reps)) continue;
 
-    const exerciseLogsToCreate = [];
-    let prCount = 0;
-
-    for (const set of setsLogged) {
-      const weight = parseFloat(set.weight);
-      const reps = parseInt(set.reps, 10);
-      if (isNaN(weight) || isNaN(reps)) continue;
-
-      const isNewPR = await checkForPR(userId, set.exerciseName, weight, reps);
-      if (isNewPR) prCount++;
-      set.isPR = isNewPR; // Mutate for response
-
-      exerciseLogsToCreate.push({
-        userId,
-        workoutLogId: newWorkoutLog._id,
+    const isNewPR = await checkForPR(userId, set.exerciseName, weight, reps);
+    if (isNewPR) {
+      prCount++;
+      set.isPR = true; // Mutate for response
+      // Trigger PR achievement check
+      await checkAchievements(userId, "PR_HIT", {
         exerciseName: set.exerciseName,
-        setNumber: parseInt(set.setNumber, 10),
         weight,
         reps,
-        date: newWorkoutLog.date,
+        e1rm: weight * (1 + reps / 30),
       });
+    } else {
+      set.isPR = false;
     }
 
-    if (exerciseLogsToCreate.length > 0) {
-      await ExerciseLog.insertMany(exerciseLogsToCreate);
-    }
-
-    expGained += prCount * gameConfig.EXP.PR_BONUS;
-    expGained += setsLogged.length * gameConfig.EXP.SET_LOGGED;
-    newWorkoutLog.expGained = expGained;
-    await newWorkoutLog.save();
-
-    const user = await User.findById(userId);
-    user.exp += expGained;
-    const updatedUser = await checkAndApplyLevelUp(user._id);
-
-    await checkAchievements(userId, "WORKOUT_LOGGED", { setsLogged });
-
-    if (prCount > 0) {
-      await checkAchievements(userId, "PR_HIT", {});
-    }
-
-    res.status(201).json({
-      message: `[System] Quest Complete! Workout logged. You gained ${expGained} EXP and hit ${prCount} PR(s)!`,
-      log: newWorkoutLog,
-      loggedSetsWithPRs: setsLogged,
-      updatedUserStatus: {
-        level: updatedUser.level,
-        exp: updatedUser.exp,
-        expToNextLevel: updatedUser.expToNextLevel,
-        rank: updatedUser.rank,
-      },
+    exerciseLogsToCreate.push({
+      userId,
+      workoutLogId: newWorkoutLog._id,
+      exerciseName: set.exerciseName,
+      setNumber: parseInt(set.setNumber, 10),
+      weight,
+      reps,
+      date: newWorkoutLog.date,
     });
+  }
+
+  if (exerciseLogsToCreate.length > 0) {
+    await ExerciseLog.insertMany(exerciseLogsToCreate);
+  }
+
+  expGained += prCount * gameConfig.EXP.PR_BONUS;
+  expGained += setsLogged.length * gameConfig.EXP.SET_LOGGED;
+  newWorkoutLog.expGained = expGained;
+  await newWorkoutLog.save();
+
+  // Trigger workout count achievement check
+  await checkAchievements(userId, "WORKOUT_LOGGED", { setsLogged });
+
+  const user = await User.findById(userId);
+  user.exp += expGained;
+  const updatedUser = await checkAndApplyLevelUp(user._id);
+
+  // Return all necessary data
+  return {
+    message: `[System] Quest Complete! Workout logged. You gained ${expGained} EXP and hit ${prCount} PR(s)!`,
+    log: newWorkoutLog,
+    loggedSetsWithPRs: setsLogged,
+    updatedUserStatus: {
+      level: updatedUser.level,
+      exp: updatedUser.exp,
+      expToNextLevel: updatedUser.expToNextLevel,
+      rank: updatedUser.rank,
+    },
+  };
+};
+
+// @desc    Log a workout session permanently
+// @route   POST /api/workouts/log
+// @access  Private
+const logWorkout = async (req, res) => {
+  const { workoutId, duration, setsLogged } = req.body;
+  try {
+    const result = await createPermanentWorkoutLog(
+      req.user.id,
+      workoutId,
+      duration,
+      setsLogged
+    );
+    res.status(201).json(result);
   } catch (error) {
-    res.status(500).json({
-      message: "Server error while logging workout.",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({
+        message: "Server error while logging workout.",
+        error: error.message,
+      });
   }
 };
 
@@ -165,11 +187,9 @@ const createCustomWorkout = async (req, res) => {
   const userId = req.user.id;
 
   if (!name || !exercises || exercises.length === 0) {
-    return res
-      .status(400)
-      .json({
-        message: "Workout name and at least one exercise are required.",
-      });
+    return res.status(400).json({
+      message: "Workout name and at least one exercise are required.",
+    });
   }
 
   try {
@@ -206,4 +226,5 @@ module.exports = {
   getWorkoutLogDetails,
   createCustomWorkout,
   getMyWorkouts,
+  createPermanentWorkoutLog,
 };

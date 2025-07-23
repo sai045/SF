@@ -72,29 +72,32 @@ function WorkoutHistoryListPage() {
     <AppContainer>
       <Title>Workout Logbook</Title>
       <HistoryList>
-        {history.length === 0 && <p>You haven't logged any workouts yet.</p>}
-        {history.map((log) => (
-          <HistoryItem
-            key={log._id}
-            to={`/history/workouts/${log._id}`}
-            isBoss={log.workoutId.type === "Boss Battle"}
-          >
-            <h3>
-              {log.workoutId.type === "Boss Battle" && (
-                <FaCrown color={theme.colors.danger} />
-              )}
-              {log.workoutId.name}
-            </h3>
-            <p>
-              {new Date(log.date).toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-          </HistoryItem>
-        ))}
+        {(!history || (history && history.length === 0)) && (
+          <p>You haven't logged any workouts yet.</p>
+        )}
+        {history &&
+          history.map((log) => (
+            <HistoryItem
+              key={log._id}
+              to={`/history/workouts/${log._id}`}
+              isBoss={log.workoutId.type === "Boss Battle"}
+            >
+              <h3>
+                {log.workoutId.type === "Boss Battle" && (
+                  <FaCrown color={theme.colors.danger} />
+                )}
+                {log.workoutId.name}
+              </h3>
+              <p>
+                {new Date(log.date).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </HistoryItem>
+          ))}
       </HistoryList>
     </AppContainer>
   );

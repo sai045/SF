@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../context/AuthContext";
-import { AppContainer, Title } from "../components/common/Styled";
+import { AppContainer, Title, Button } from "../components/common/Styled";
 import { getProfileStats } from "../api/user.api.js";
 import StatBox from "../components/profile/StatBox";
 import { theme } from "../styles/theme";
 import { FaCrown, FaDumbbell, FaWeight } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const ProfileHeader = styled.div`
   text-align: center;

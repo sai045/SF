@@ -179,16 +179,6 @@ function NutritionDashboardPage() {
             </Button>
           </form>
         </FormCard>
-
-        <h2
-          style={{
-            textAlign: "center",
-            fontFamily: theme.fonts.body,
-            fontWeight: "normal",
-          }}
-        >
-          Log a Meal
-        </h2>
         <p
           style={{
             textAlign: "center",
