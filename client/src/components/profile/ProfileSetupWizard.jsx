@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { updateUserProfile } from "../../api/user.api.js";
 import { theme } from "../../styles/theme";
 import { Input, Button, FormCard, Title } from "../common/Styled";
-import { toast } from "react-toastify";
+import toast from 'react-hot-toast';
 
 const ModalOverlay = styled.div`
   position: fixed;

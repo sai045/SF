@@ -5,7 +5,7 @@ import { getAchievements, setActiveTitle } from "../api/user.api.js";
 import { AppContainer, Title, Button } from "../components/common/Styled";
 import { theme } from "../styles/theme";
 import { FaLock, FaUnlock, FaCheckCircle } from "react-icons/fa";
-import { toast } from "react-toastify";
+import toast from 'react-hot-toast';
 
 const AchievementsGrid = styled.div`
   display: grid;
