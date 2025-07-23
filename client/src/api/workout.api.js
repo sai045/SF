@@ -52,3 +52,8 @@ export const getMyWorkouts = async () => {
   const response = await apiClient.get("/custom");
   return response.data;
 };
+
+export const getMasterExerciseList = async () => {
+  const response = await apiClient.get("/custom/master-list");
+  return response.data;
+};

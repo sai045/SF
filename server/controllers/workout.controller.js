@@ -223,6 +223,21 @@ const getMyWorkouts = async (req, res) => {
   }
 };
 
+const getMasterExerciseList = async (req, res) => {
+  try {
+    const exercises = await MasterExercise.find({}).sort({
+      category: 1,
+      name: 1,
+    });
+    res.json(exercises);
+  } catch (error) {
+    console.error("Error fetching master exercise list:", error);
+    res
+      .status(500)
+      .json({ message: "Server error fetching master exercise list." });
+  }
+};
+
 module.exports = {
   getWorkoutById,
   logWorkout,
@@ -232,4 +247,5 @@ module.exports = {
   createCustomWorkout,
   getMyWorkouts,
   createPermanentWorkoutLog,
+  getMasterExerciseList,
 };

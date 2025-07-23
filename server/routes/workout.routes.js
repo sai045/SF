@@ -25,5 +25,6 @@ router
   .route("/custom")
   .post(protect, createCustomWorkout)
   .get(protect, getMyWorkouts);
+router.get("/custom/master-list", protect, getMasterExerciseList);
 
 module.exports = router;

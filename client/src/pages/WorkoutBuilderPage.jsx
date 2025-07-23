@@ -11,7 +11,8 @@ import {
 } from "../components/common/Styled";
 import { theme } from "../styles/theme";
 import { FaPlus, FaTrash } from "react-icons/fa";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
+import { getMasterExerciseList } from "../api/workout.api.js";
 
 const ExerciseForm = styled.div`
   background: ${theme.colors.cardBackground};
@@ -35,6 +36,12 @@ function WorkoutBuilderPage() {
     { name: "", sets: "", reps: "", rest: "" },
   ]);
   const [loading, setLoading] = useState(false);
+  const [masterExercises, setMasterExercises] = useState([]);
+
+  useEffect(() => {
+    // Fetch the list of all exercises when the component mounts
+    getMasterExerciseList().then(setMasterExercises);
+  }, []);
 
   const handleExerciseChange = (index, event) => {
     const values = [...exercises];
@@ -144,6 +151,19 @@ function WorkoutBuilderPage() {
               >
                 <FaTrash />
               </Button>
+              <select
+                name="name"
+                value={exercise.name}
+                onChange={(e) => handleExerciseChange(index, e)}
+                required
+              >
+                <option value="">-- Select Exercise --</option>
+                {masterExercises.map((ex) => (
+                  <option key={ex._id} value={ex.name}>
+                    {ex.name}
+                  </option>
+                ))}
+              </select>
             </ExerciseRow>
           </ExerciseForm>
         ))}

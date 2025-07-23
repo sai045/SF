@@ -1,3 +1,5 @@
+const MasterExercise = require("../models/MasterExercise.model");
+
 // Mifflin-St Jeor Equation for BMR
 const calculateBMR = (gender, weight_kg, height_cm, age) => {
   if (!gender || !weight_kg || !height_cm || !age) {
@@ -22,34 +24,73 @@ const MET_VALUES = {
   STEPS_PER_MINUTE_WALKING: 3.5, // Corresponds to walking at ~3.0 mph
 };
 
-// A function to estimate calories burned from workouts
-const calculateWorkoutCalories = (workoutLogs, userWeightKg) => {
+const calculateWorkoutCalories = async (workoutLogs, userWeightKg) => {
   if (!workoutLogs || workoutLogs.length === 0 || !userWeightKg) return 0;
 
+  // The new function expects setsLogged, so we extract them from the logs
+  const allSetsLogged = workoutLogs.flatMap((log) => {
+    // Find the original workout template to get the rest periods
+    const originalWorkout = log.workoutId;
+    return log.setsLogged.map((set) => {
+      const originalExercise = originalWorkout.exercises.find(
+        (ex) => ex.name === set.exerciseName
+      );
+      return {
+        ...set.toObject(),
+        rest: originalExercise ? originalExercise.rest : 60, // Default rest if not found
+      };
+    });
+  });
+
+  if (allSetsLogged.length === 0) return 0;
+
   let totalCaloriesBurned = 0;
-  for (const log of workoutLogs) {
-    if (!log.workoutId || !log.duration) continue; // Skip logs with missing data
 
-    const durationMinutes = log.duration / 60;
-    const workoutName = log.workoutId.name.toLowerCase();
+  const exerciseNames = [
+    ...new Set(allSetsLogged.map((set) => set.exerciseName)),
+  ];
+  const masterExercises = await MasterExercise.find({
+    name: { $in: exerciseNames },
+  });
+  const masterExerciseMap = new Map(masterExercises.map((ex) => [ex.name, ex]));
 
-    // Use a high MET value if 'HIIT' or 'Boss' is in the name, else standard strength MET.
-    const met =
-      workoutName.includes("hiit") ||
-      workoutName.includes("boss") ||
-      workoutName.includes("day 2") ||
-      workoutName.includes("day 5")
-        ? MET_VALUES.HIIT
-        : workoutName.includes("liss") ||
-          workoutName.includes("recovery") ||
-          workoutName.includes("day 7")
-        ? MET_VALUES.LISS_CARDIO
-        : MET_VALUES.STRENGTH_TRAINING;
+  const SECONDS_PER_REP = 3;
 
-    // Formula: METs * 3.5 * weight in kg / 200 * duration in minutes
-    const calories = ((met * 3.5 * userWeightKg) / 200) * durationMinutes;
-    totalCaloriesBurned += calories;
+  for (const set of allSetsLogged) {
+    const masterEx = masterExerciseMap.get(set.exerciseName);
+    if (!masterEx) continue;
+
+    let durationMinutes = 0;
+    let metValue = masterEx.metValue;
+
+    if (masterEx.unit === "per_minute") {
+      const repString = set.reps.toString().toLowerCase();
+      let seconds = 0;
+      if (repString.includes("min")) {
+        seconds = (parseFloat(repString) || 0) * 60;
+      } else if (repString.includes("s")) {
+        seconds = parseFloat(repString) || 0;
+      } else {
+        // If it's just a number, assume it's seconds (for things like Plank)
+        seconds = parseFloat(repString) || 0;
+      }
+      durationMinutes = seconds / 60;
+    } else if (masterEx.unit === "per_rep_and_rest") {
+      const reps = parseInt(set.reps, 10);
+      if (isNaN(reps)) continue;
+
+      const timeUnderTensionSeconds = reps * SECONDS_PER_REP;
+      const restSeconds = set.rest || 60;
+      durationMinutes = (timeUnderTensionSeconds + restSeconds) / 60;
+    }
+
+    if (durationMinutes > 0) {
+      const caloriesForSet =
+        ((metValue * 3.5 * userWeightKg) / 200) * durationMinutes;
+      totalCaloriesBurned += caloriesForSet;
+    }
   }
+
   return totalCaloriesBurned;
 };
 
@@ -75,9 +116,72 @@ const calculateE1RM = (weight, reps) => {
   return weight * (1 + reps / 30);
 };
 
+/**
+ * Estimates calories burned from a workout session by analyzing each logged set.
+ * @param {Array} setsLogged - The array of sets from a WorkoutLog.
+ * @param {number} userWeightKg - The user's weight in kilograms.
+ * @returns {Promise<number>} - The estimated total calories burned.
+ */
+const calculateWorkoutCaloriesBottomUp = async (setsLogged, userWeightKg) => {
+  if (!setsLogged || setsLogged.length === 0 || !userWeightKg) return 0;
+
+  let totalCaloriesBurned = 0;
+
+  // Fetch all unique master exercises for this workout in one query for efficiency
+  const exerciseNames = [...new Set(setsLogged.map((set) => set.exerciseName))];
+  const masterExercises = await MasterExercise.find({
+    name: { $in: exerciseNames },
+  });
+  const masterExerciseMap = new Map(masterExercises.map((ex) => [ex.name, ex]));
+
+  // Define an estimated time per rep for strength exercises
+  const SECONDS_PER_REP = 3;
+
+  for (const set of setsLogged) {
+    const masterEx = masterExerciseMap.get(set.exerciseName);
+    if (!masterEx) continue; // Skip if exercise is not in our master list
+
+    let durationMinutes = 0;
+    let metValue = masterEx.metValue;
+
+    // --- Logic for Timed Exercises (Cardio, Planks, Stretches) ---
+    if (masterEx.unit === "per_minute") {
+      // Reps for timed exercises are stored as strings like "5 min", "60s", "30s"
+      const repString = set.reps.toString().toLowerCase();
+      let seconds = 0;
+      if (repString.includes("min")) {
+        seconds = (parseFloat(repString) || 0) * 60;
+      } else if (repString.includes("s")) {
+        seconds = parseFloat(repString) || 0;
+      }
+      durationMinutes = seconds / 60;
+    }
+    // --- Logic for Rep-based Exercises (Strength, Core) ---
+    else {
+      // We estimate the duration of the set itself plus the rest period
+      const reps = parseInt(set.reps, 10);
+      if (isNaN(reps)) continue;
+
+      const timeUnderTensionSeconds = reps * SECONDS_PER_REP;
+      // Find the rest period from the workout template (this is a simplification)
+      const restSeconds = set.rest || 60; // Default to 60s if not specified
+      durationMinutes = (timeUnderTensionSeconds + restSeconds) / 60;
+    }
+
+    if (durationMinutes > 0) {
+      // The standard formula: (METs * 3.5 * weight in kg / 200) * duration in minutes
+      const caloriesForSet =
+        ((metValue * 3.5 * userWeightKg) / 200) * durationMinutes;
+      totalCaloriesBurned += caloriesForSet;
+    }
+  }
+
+  return totalCaloriesBurned;
+};
+
 module.exports = {
   calculateBMR,
-  calculateWorkoutCalories,
+  calculateWorkoutCalories: calculateWorkoutCaloriesBottomUp,
   calculateStepCalories,
   calculateE1RM,
 };

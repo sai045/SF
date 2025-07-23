@@ -40,8 +40,8 @@ const finalizeDay = async (user, date) => {
     dailyActivity.steps.count,
     user.physicalMetrics.weight_kg
   );
-  const workoutCalories = calculateWorkoutCalories(
-    workoutLogs,
+  const workoutCalories = await calculateWorkoutCalories(
+    workoutLogs.flatMap((log) => log.setsLogged),
     user.physicalMetrics.weight_kg
   );
   const caloriesOut = bmr + stepCalories + workoutCalories;
