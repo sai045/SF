@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { theme } from "../../styles/theme";
 import { Input, Button } from "../common/Styled";
 import { FaFire } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const HabitList = styled.div`
   display: flex;

@@ -4,6 +4,7 @@ import { Input, Button } from "../common/Styled";
 import { theme } from "../../styles/theme";
 import { getExerciseHistory } from "../../api/workout.api.js";
 import { FaEdit, FaCheck } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const ExerciseCard = styled.div`
   background-color: ${theme.colors.cardBackground};

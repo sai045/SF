@@ -11,6 +11,7 @@ import {
 } from "../components/common/Styled";
 import { theme } from "../styles/theme";
 import { FaPlus, FaTrash } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const ExerciseForm = styled.div`
   background: ${theme.colors.cardBackground};

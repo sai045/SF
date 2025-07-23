@@ -10,6 +10,7 @@ import {
 import { updateMealInLog } from "../../api/activity.api.js";
 import useDebounce from "../../hooks/useDebounce";
 import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-toastify";
 
 const ModalOverlay = styled.div`
   position: fixed;
