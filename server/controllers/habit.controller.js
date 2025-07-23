@@ -11,6 +11,7 @@ const getHabits = async (req, res) => {
     const habits = await Habit.find({ userId: req.user.id });
     res.json(habits);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error fetching habits." });
   }
 };
@@ -31,6 +32,7 @@ const createHabit = async (req, res) => {
     });
     res.status(201).json(newHabit);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error creating habit." });
   }
 };
@@ -83,6 +85,7 @@ const checkinHabit = async (req, res) => {
       updatedUserStatus: updatedUser,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error checking in habit." });
   }
 };

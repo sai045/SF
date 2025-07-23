@@ -1,5 +1,4 @@
 const WorkoutSession = require("../models/WorkoutSession.model");
-const Workout = require("../models/Workout.model");
 const { createPermanentWorkoutLog } = require("./workout.controller"); // We'll call the original log function at the end
 
 // @desc    Start a new workout session
@@ -25,6 +24,7 @@ const startWorkoutSession = async (req, res) => {
     session = await WorkoutSession.create({ userId, workoutId, date: today });
     res.status(201).json(session);
   } catch (error) {
+    console.error("Error starting session:", error);
     res
       .status(500)
       .json({ message: "Error starting session", error: error.message });
@@ -43,6 +43,7 @@ const getWorkoutSession = async (req, res) => {
     }
     res.json(session);
   } catch (error) {
+    console.error("Error fetching session:", error);
     res
       .status(500)
       .json({ message: "Error fetching session", error: error.message });
@@ -61,6 +62,7 @@ const updateWorkoutSession = async (req, res) => {
     );
     res.json(session);
   } catch (error) {
+    console.error("Error updating session:", error);
     res
       .status(500)
       .json({ message: "Error updating session", error: error.message });
@@ -99,6 +101,7 @@ const finishWorkoutSession = async (req, res) => {
     // Pass the request and response objects to the logWorkout controller
     return res.status(201).json(result);
   } catch (error) {
+    console.error("Error finishing session:", error);
     res
       .status(500)
       .json({ message: "Error finishing session", error: error.message });

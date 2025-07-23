@@ -119,11 +119,11 @@ function Navbar() {
           </span>{" "}
           <p>Nutrition</p>
         </NavItem>
-        <NavItem to="/history/workouts">
+        <NavItem to="/history/summary">
           <span>
-            <FaBook />
+            <FaCalendarAlt />
           </span>{" "}
-          <p>Logbook</p>
+          <p>History</p>
         </NavItem>
         <NavItem to="/profile">
           <span>

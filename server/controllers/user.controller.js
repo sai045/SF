@@ -61,6 +61,7 @@ const registerUser = async (req, res) => {
       res.status(400).json({ message: "Invalid user data." });
     }
   } catch (error) {
+    console.error("Error during user registration:", error);
     res.status(500).json({
       message: "Server error during registration.",
       error: error.message,
@@ -86,6 +87,7 @@ const loginUser = async (req, res) => {
       });
     }
   } catch (error) {
+    console.error("Error during user login:", error);
     res
       .status(500)
       .json({ message: "Server error during login.", error: error.message });
@@ -126,6 +128,7 @@ const updateUserProfile = async (req, res) => {
 
     res.json(responseUser);
   } catch (error) {
+    console.error("Error updating user profile:", error);
     res.status(500).json({
       message: "Server error updating profile.",
       error: error.message,
@@ -207,46 +210,62 @@ const getProfileStats = async (req, res) => {
 // @route   GET /api/users/achievements
 // @access  Private
 const getAchievements = async (req, res) => {
-  const user = req.user;
-  const unlockedKeys = new Set(user.unlockedAchievements.map((a) => a.key));
+  try {
+    const user = req.user;
+    const unlockedKeys = new Set(user.unlockedAchievements.map((a) => a.key));
 
-  const allAchievements = Object.entries(ALL_ACHIEVEMENTS).map(
-    ([key, value]) => ({
-      key,
-      ...value,
-      isUnlocked: unlockedKeys.has(key),
-    })
-  );
+    const allAchievements = Object.entries(ALL_ACHIEVEMENTS).map(
+      ([key, value]) => ({
+        key,
+        ...value,
+        isUnlocked: unlockedKeys.has(key),
+      })
+    );
 
-  res.json(allAchievements);
+    res.json(allAchievements);
+  } catch (error) {
+    console.error("Error fetching achievements:", error);
+    res.status(500).json({
+      message: "Server error fetching achievements.",
+      error: error.message,
+    });
+  }
 };
 
 // @desc    Set the user's active title
 // @route   PUT /api/users/profile/title
 // @access  Private
 const setActiveTitle = async (req, res) => {
-  const { titleKey } = req.body;
-  const user = req.user;
+  try {
+    const { titleKey } = req.body;
+    const user = req.user;
 
-  // Check if the title exists and is a title
-  const achievement = ALL_ACHIEVEMENTS[titleKey];
-  if (!achievement || !achievement.isTitle) {
-    return res.status(400).json({ message: "Invalid title." });
+    // Check if the title exists and is a title
+    const achievement = ALL_ACHIEVEMENTS[titleKey];
+    if (!achievement || !achievement.isTitle) {
+      return res.status(400).json({ message: "Invalid title." });
+    }
+
+    // Check if the user has unlocked this title
+    if (!user.unlockedAchievements.some((a) => a.key === titleKey)) {
+      return res
+        .status(403)
+        .json({ message: "You have not unlocked this title." });
+    }
+
+    user.title = achievement.name;
+    await user.save();
+
+    // Send back the full user object so the frontend context can update
+    const updatedUser = await User.findById(user._id).select("-password");
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Error setting active title:", error);
+    res.status(500).json({
+      message: "Server error setting active title.",
+      error: error.message,
+    });
   }
-
-  // Check if the user has unlocked this title
-  if (!user.unlockedAchievements.some((a) => a.key === titleKey)) {
-    return res
-      .status(403)
-      .json({ message: "You have not unlocked this title." });
-  }
-
-  user.title = achievement.name;
-  await user.save();
-
-  // Send back the full user object so the frontend context can update
-  const updatedUser = await User.findById(user._id).select("-password");
-  res.json(updatedUser);
 };
 
 module.exports = {

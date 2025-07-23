@@ -15,6 +15,7 @@ const getWorkoutById = async (req, res) => {
     if (!workout) return res.status(404).json({ message: "Workout not found" });
     res.json(workout);
   } catch (error) {
+    console.error("Error fetching workout by ID:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -27,6 +28,7 @@ const getExerciseHistory = async (req, res) => {
     }).sort({ date: -1 });
     res.json(lastLog);
   } catch (error) {
+    console.error("Error fetching exercise history:", error);
     res
       .status(500)
       .json({ message: "Server error fetching exercise history." });
@@ -133,12 +135,11 @@ const logWorkout = async (req, res) => {
     );
     res.status(201).json(result);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Server error while logging workout.",
-        error: error.message,
-      });
+    console.error("Error logging workout:", error);
+    res.status(500).json({
+      message: "Server error while logging workout.",
+      error: error.message,
+    });
   }
 };
 
@@ -153,6 +154,7 @@ const getWorkoutHistoryList = async (req, res) => {
 
     res.json(history);
   } catch (error) {
+    console.error("Error fetching workout history:", error);
     res.status(500).json({ message: "Server error fetching workout history." });
   }
 };
@@ -173,6 +175,7 @@ const getWorkoutLogDetails = async (req, res) => {
 
     res.json(log);
   } catch (error) {
+    console.error("Error fetching workout log details:", error);
     res
       .status(500)
       .json({ message: "Server error fetching workout log details." });
@@ -202,6 +205,7 @@ const createCustomWorkout = async (req, res) => {
     });
     res.status(201).json(newWorkout);
   } catch (error) {
+    console.error("Error creating custom workout:", error);
     res.status(500).json({ message: "Server error creating custom workout." });
   }
 };
@@ -214,6 +218,7 @@ const getMyWorkouts = async (req, res) => {
     const myWorkouts = await Workout.find({ createdBy: req.user.id });
     res.json(myWorkouts);
   } catch (error) {
+    console.error("Error fetching custom workouts:", error);
     res.status(500).json({ message: "Server error fetching custom workouts." });
   }
 };

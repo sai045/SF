@@ -29,3 +29,8 @@ export const updateMealInLog = async (mealData) => {
   const response = await apiClient.post("/meals", mealData);
   return response.data;
 };
+
+export const getHistoricalSummary = async () => {
+  const response = await apiClient.get("/history");
+  return response.data;
+};

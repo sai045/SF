@@ -34,6 +34,7 @@ const logBodyMetric = async (req, res) => {
 
     res.status(201).json(newMetric);
   } catch (error) {
+    console.error("Error logging body metric:", error);
     res
       .status(500)
       .json({
@@ -53,11 +54,10 @@ const getBodyMetricsHistory = async (req, res) => {
     });
     res.status(200).json(metrics);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Server error fetching metric history.",
-        error: error.message,
+    console.error("Error fetching metric history:", error);
+    res.status(500).json({
+      message: "Server error fetching metric history.",
+      error: error.message,
       });
   }
 };

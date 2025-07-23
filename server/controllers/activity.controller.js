@@ -29,6 +29,7 @@ const logSteps = async (req, res) => {
     await dailyLog.save();
     res.status(200).json(dailyLog);
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .json({ message: "Error logging steps", error: err.message });
@@ -54,6 +55,7 @@ const getTodaysActivityLog = async (req, res) => {
     }
     res.json(dailyLog);
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .json({ message: "Error getting today's log", error: err.message });
@@ -93,10 +95,36 @@ const updateMealInLog = async (req, res) => {
 
     res.json(populatedLog);
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .json({ message: "Error updating meal log", error: err.message });
   }
 };
 
-module.exports = { logSteps, getTodaysActivityLog, updateMealInLog };
+// @desc    Get all finalized historical daily activity logs for the user
+// @route   GET /api/activity/history
+// @access  Private
+const getHistoricalSummary = async (req, res) => {
+  try {
+    const history = await DailyActivityLog.find({
+      userId: req.user.id,
+      "calorieBalance.isFinalized": true, // Only get days that the cron job has processed
+    }).sort({ date: -1 }); // Most recent first
+
+    res.json(history);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Error fetching historical summary",
+      error: err.message,
+    });
+  }
+};
+
+module.exports = {
+  logSteps,
+  getTodaysActivityLog,
+  updateMealInLog,
+  getHistoricalSummary,
+};

@@ -38,6 +38,7 @@ const searchIngredients = async (req, res) => {
 
     res.json(ingredients);
   } catch (error) {
+    console.error("Error searching ingredients:", error);
     res.status(500).json({ message: "Server error searching ingredients." });
   }
 };
@@ -138,6 +139,7 @@ const getMealTemplateById = async (req, res) => {
       return res.status(404).json({ message: "Template not found" });
     res.json(template);
   } catch (err) {
+    console.error("Error fetching template:", err);
     res.status(500).json({ message: "Error fetching template" });
   }
 };
@@ -184,6 +186,7 @@ const prepareTemplateForLogging = async (req, res) => {
 
     res.json(preparedIngredients);
   } catch (error) {
+    console.error("Error preparing template for logging:", error);
     res
       .status(500)
       .json({ message: "Error preparing template", error: error.message });
