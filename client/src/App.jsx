@@ -21,6 +21,7 @@ import WorkoutLogDetailPage from "./pages/WorkoutLogDetailPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import MyWorkoutsPage from "./pages/MyWorkoutsPage";
 import WorkoutBuilderPage from "./pages/WorkoutBuilderPage";
+import HistorySummaryPage from "./pages/HistorySummaryPage";
 
 function App() {
   const location = useLocation();
