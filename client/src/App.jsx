@@ -143,15 +143,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/history/summary"
+              element={
+                <ProtectedRoute>
+                  <HistorySummaryPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
-          <Route
-            path="/history/summary"
-            element={
-              <ProtectedRoute>
-                <HistorySummaryPage />
-              </ProtectedRoute>
-            }
-          />
         </Layout>
       )}
     </ThemeProvider>
