@@ -61,7 +61,7 @@ const seedIngredients = [
     protein_per_100g: 13,
     carbs_per_100g: 1.1,
     fats_per_100g: 11,
-    category: "Protein",
+    category: "Poultry",
     isVerified: true,
   },
   {
