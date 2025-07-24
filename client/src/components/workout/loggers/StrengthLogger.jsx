@@ -61,6 +61,7 @@ function StrengthLogger({
   onSetUpdate,
   initialLogs,
   lastPerformance,
+  masterExercise,
 }) {
   const [setsData, setSetsData] = useState([]);
 
