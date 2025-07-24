@@ -1,12 +1,11 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { theme } from "../../styles/theme";
 import { getExerciseHistory } from "../../api/workout.api.js";
 import { FaYoutube } from "react-icons/fa";
 import StrengthLogger from "./loggers/StrengthLogger";
 import TimedLogger from "./loggers/TimedLogger";
-import CardioLogger from "./loggers/CardioLogger"; // Import the new logger
+import CardioLogger from "./loggers/CardioLogger";
 
 const ExerciseCard = styled.div`
   background-color: ${theme.colors.cardBackground};
@@ -51,7 +50,6 @@ function ActiveExercise({
   const renderLogger = () => {
     if (!masterExercise) return <p>Loading exercise data...</p>;
 
-    // This logic determines which logger UI to show
     if (
       masterExercise.category === "LISS" ||
       masterExercise.category === "HIIT"
@@ -74,6 +72,7 @@ function ActiveExercise({
             onSetUpdate={onSetUpdate}
             initialLogs={initialLogs}
             lastPerformance={lastPerformance}
+            masterExercise={masterExercise}
           />
         );
       case "per_minute":
