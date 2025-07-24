@@ -1,6 +1,6 @@
 const User = require("../models/User.model");
 const WorkoutLog = require("../models/WorkoutLog.model");
-const MealLog = require("../models/MealLog.model");
+const Ingredient = require("../models/Ingredient.model");
 const DailyActivityLog = require("../models/DailyActivityLog.model");
 const WorkoutSession = require("../models/WorkoutSession.model"); // Important import
 const {
@@ -27,15 +27,37 @@ const getDashboardData = async (req, res) => {
     const endOfDay = new Date();
     endOfDay.setUTCHours(23, 59, 59, 999);
 
-    // --- 1. Calorie & Activity Calculation (no changes here) ---
-    const mealLogs = await MealLog.find({
+    // --- 1. LIVE CALORIE & ACTIVITY CALCULATION ---
+    let caloriesIn = 0;
+    const dailyLog = await DailyActivityLog.findOne({
       userId: user._id,
-      date: { $gte: startOfDay, $lte: endOfDay },
+      date: startOfDay,
     });
-    const caloriesIn = mealLogs.reduce(
-      (acc, log) => acc + log.totalCalories,
-      0
-    );
+
+    if (dailyLog && dailyLog.mealsLogged && dailyLog.mealsLogged.length > 0) {
+      const allIngredientIds = dailyLog.mealsLogged.flatMap((meal) =>
+        meal.ingredients.map((ing) => ing.ingredientId)
+      );
+      const uniqueIngredientIds = [...new Set(allIngredientIds)];
+      const masterIngredients = await Ingredient.find({
+        _id: { $in: uniqueIngredientIds },
+      });
+      const masterIngredientMap = new Map(
+        masterIngredients.map((i) => [i._id.toString(), i])
+      );
+
+      for (const meal of dailyLog.mealsLogged) {
+        for (const loggedIng of meal.ingredients) {
+          const masterIng = masterIngredientMap.get(
+            loggedIng.ingredientId.toString()
+          );
+          if (masterIng) {
+            const multiplier = loggedIng.weightInGrams / 100;
+            caloriesIn += masterIng.calories_per_100g * multiplier;
+          }
+        }
+      }
+    }
 
     const activityLog = await DailyActivityLog.findOne({
       userId: user._id,
