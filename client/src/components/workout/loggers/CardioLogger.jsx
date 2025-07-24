@@ -104,7 +104,6 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
       <CardioRow>
         <InputGroup>
           <div>
-            <Label>Duration</Label>
             <TimedInput
               type="number"
               value={duration}
@@ -113,7 +112,6 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
             <span>min</span>
           </div>
           <div>
-            <Label>Speed</Label>
             <TimedInput
               type="number"
               step="0.1"
@@ -123,7 +121,6 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
             <span>km/h</span>
           </div>
           <div>
-            <Label>Incline</Label>
             <TimedInput
               type="number"
               step="0.1"
