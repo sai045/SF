@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    console.log("AuthContext: Initializing user from localStorage", storedUser);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       refreshDashboardSummary();
@@ -78,6 +79,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const userData = await authService.login({ email, password });
     setFullUser(userData);
+    refreshDashboardSummary();
     return userData;
   };
 
