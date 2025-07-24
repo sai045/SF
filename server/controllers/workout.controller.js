@@ -8,6 +8,7 @@ const {
   checkForPR,
 } = require("../utils/gamification");
 const { checkAchievements } = require("../utils/achievements");
+const MasterExercise = require("../models/MasterExercise.model");
 
 const getWorkoutById = async (req, res) => {
   try {

@@ -25,8 +25,8 @@ export const getWorkoutSession = async (sessionId) => {
   return response.data;
 };
 
-export const updateWorkoutSession = async (sessionId, setsLogged) => {
-  const response = await apiClient.put(`/${sessionId}`, { setsLogged });
+export const updateWorkoutSession = async (sessionId, updateData) => {
+  const response = await apiClient.put(`/${sessionId}`, updateData);
   return response.data;
 };
 

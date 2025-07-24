@@ -1,5 +1,6 @@
 const WorkoutSession = require("../models/WorkoutSession.model");
 const { createPermanentWorkoutLog } = require("./workout.controller"); // We'll call the original log function at the end
+const Workout = require("../models/Workout.model");
 
 // @desc    Start a new workout session
 // @route   POST /api/sessions/start
@@ -10,18 +11,28 @@ const startWorkoutSession = async (req, res) => {
   today.setUTCHours(0, 0, 0, 0);
 
   try {
-    // Check if a session for this workout already exists today
     let session = await WorkoutSession.findOne({
       userId,
       workoutId,
       date: today,
+      status: "in-progress",
     });
     if (session) {
-      return res.status(200).json(session); // Return existing session
+      return res.status(200).json(session);
     }
 
-    // Create a new one
-    session = await WorkoutSession.create({ userId, workoutId, date: today });
+    // Fetch the workout template to copy its exercises
+    const workoutTemplate = await Workout.findById(workoutId);
+    if (!workoutTemplate)
+      return res.status(404).json({ message: "Workout template not found." });
+
+    // Create a new session, copying the exercises from the template
+    session = await WorkoutSession.create({
+      userId,
+      workoutId,
+      date: today,
+      exercises: workoutTemplate.exercises, // Copy the exercise list
+    });
     res.status(201).json(session);
   } catch (error) {
     console.error("Error starting session:", error);
@@ -50,16 +61,23 @@ const getWorkoutSession = async (req, res) => {
   }
 };
 
-// @desc    Update the sets logged in a session
+// @desc    Update the sets logged AND the exercise list in a session
 // @route   PUT /api/sessions/:sessionId
 const updateWorkoutSession = async (req, res) => {
   try {
-    const { setsLogged } = req.body;
+    // Now accepts both setsLogged and the potentially modified exercises array
+    const { setsLogged, exercises } = req.body;
+
+    const updateData = {};
+    if (setsLogged) updateData.setsLogged = setsLogged;
+    if (exercises) updateData.exercises = exercises;
+
     const session = await WorkoutSession.findByIdAndUpdate(
       req.params.sessionId,
-      { setsLogged },
+      { $set: updateData }, // Use $set to update only provided fields
       { new: true }
-    );
+    ).populate("workoutId"); // Repopulate workoutId for the response
+
     res.json(session);
   } catch (error) {
     console.error("Error updating session:", error);
