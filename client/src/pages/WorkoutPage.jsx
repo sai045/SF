@@ -181,7 +181,7 @@ function WorkoutPage() {
         setIsResting(true);
         setRestDuration(currentExercise.rest);
       }
-      playSuccessSound();
+      // playSuccessSound();
     }
   };
 

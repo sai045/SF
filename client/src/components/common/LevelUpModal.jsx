@@ -43,7 +43,7 @@ const LevelText = styled.h1`
 
 function LevelUpModal({ oldLevel, newLevel, onClose }) {
   useEffect(() => {
-    playLevelUpSound();
+    // playLevelUpSound();
   }, []);
   return (
     <ModalOverlay onClick={onClose}>
