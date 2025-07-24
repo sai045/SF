@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { theme } from "../../../styles/theme";
 import { Button, Input } from "../../common/Styled";
@@ -50,21 +50,25 @@ const CompletedDisplay = styled.div`
 
 function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
   const isLogged = initialLogs.length > 0;
+  // --- THIS IS THE FIX ---
+  // Define loggedData at the top level so it's available for state initialization.
+  const loggedData = isLogged ? initialLogs[0] : null;
 
-  // Set initial state from master exercise, but allow user override
   const [duration, setDuration] = useState(
-    isLogged ? parseFloat(loggedData.reps) : parseFloat(exercise.reps)
+    isLogged ? parseFloat(loggedData.reps) : parseFloat(exercise.reps) || 10
   );
   const [speed, setSpeed] = useState(
     isLogged && typeof loggedData.weight === "object"
       ? loggedData.weight.speed
-      : masterExercise.defaultSpeed_kmph
+      : masterExercise.defaultSpeed_kmph || 6
   );
   const [incline, setIncline] = useState(
     isLogged && typeof loggedData.weight === "object"
       ? loggedData.weight.incline
-      : masterExercise.defaultIncline_percent
+      : masterExercise.defaultIncline_percent || 2
   );
+  // --- END OF FIX ---
+
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -85,15 +89,16 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
   };
 
   if (isLogged && !isEditing) {
-    const loggedData = initialLogs[0].weight;
+    // We already have loggedData from the top of the component
+    const displayData = loggedData.weight;
     return (
       <CompletedDisplay>
         <span>
-          <FaCheck /> COMPLETED: {initialLogs[0].reps}
+          <FaCheck /> COMPLETED: {loggedData.reps}
         </span>
-        {typeof loggedData === "object" && loggedData !== null ? (
+        {typeof displayData === "object" && displayData !== null ? (
           <span>
-            {loggedData.speed} km/h | {loggedData.incline}% incline
+            {displayData.speed} km/h | {displayData.incline}% incline
           </span>
         ) : null}
         <Button
@@ -109,13 +114,14 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
   return (
     <div>
       <p style={{ textAlign: "center", color: theme.colors.textMuted }}>
-        Target: {exercise.reps} at {masterExercise.defaultSpeed_kmph} km/h,{" "}
-        {masterExercise.defaultIncline_percent}% incline
+        Target: {exercise.reps} at {masterExercise.defaultSpeed_kmph || "N/A"}{" "}
+        km/h, {masterExercise.defaultIncline_percent || "N/A"}% incline
       </p>
 
       <CardioRow>
         <InputGroup>
           <div>
+            <Label>Duration</Label>
             <TimedInput
               type="number"
               value={duration}
@@ -124,6 +130,7 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
             <span>min</span>
           </div>
           <div>
+            <Label>Speed</Label>
             <TimedInput
               type="number"
               step="0.1"
@@ -133,6 +140,7 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
             <span>km/h</span>
           </div>
           <div>
+            <Label>Incline</Label>
             <TimedInput
               type="number"
               step="0.1"
@@ -146,7 +154,7 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
           onClick={handleLog}
           style={{ width: "auto", padding: "1rem 2rem" }}
         >
-          <FaPlay /> {isEditing ? "UPDATE LOG" : "LOG CARDIO"}
+          <FaPlay /> {isLogged ? "UPDATE LOG" : "LOG CARDIO"}
         </Button>
       </CardioRow>
     </div>
