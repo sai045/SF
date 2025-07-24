@@ -132,12 +132,6 @@ function Navbar() {
           </span>{" "}
           <p>Profile</p>
         </NavItem>
-        <NavItem to="/workouts">
-          <span>
-            <FaDumbbell />
-          </span>{" "}
-          <p>My Workouts</p>
-        </NavItem>
         <NavItem to="/history/workouts">
           <span>
             <FaBook />

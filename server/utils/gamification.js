@@ -55,12 +55,38 @@ const checkAndApplyLevelUp = async (userId) => {
   return user;
 };
 
-const checkForPR = async (userId, exerciseName, newWeight, newReps) => {
+/**
+ * Checks if a new set is a Personal Record for a given user and exercise.
+ * @param {string} userId - The ID of the user.
+ * @param {string} exerciseName - The name of the exercise.
+ * @param {number} newWeight - The weight of the newly logged set.
+ * @param {number} newReps - The reps of the newly logged set.
+ * @param {Date} workoutStartDate - The start date of the current workout session.
+ * @returns {Promise<boolean>} - True if it's a new PR, false otherwise.
+ */
+const checkForPR = async (
+  userId,
+  exerciseName,
+  newWeight,
+  newReps,
+  workoutStartDate
+) => {
   try {
     const newE1RM = calculateE1RM(newWeight, newReps);
+    if (isNaN(newE1RM)) return false;
 
+    // Find the best e1RM from all logs BEFORE the current workout started.
     const historicalBests = await ExerciseLog.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId), exerciseName } },
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          exerciseName,
+          // --- THIS IS THE CRITICAL FIX ---
+          // Only consider logs from previous sessions.
+          date: { $lt: workoutStartDate },
+          // --- END OF FIX ---
+        },
+      },
       {
         $addFields: {
           e1rm: {

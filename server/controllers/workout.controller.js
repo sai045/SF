@@ -36,83 +36,114 @@ const getExerciseHistory = async (req, res) => {
   }
 };
 
+// =================================================================
+// THE COMPLETE AND CORRECTED SERVICE-LIKE FUNCTION
+// =================================================================
 const createPermanentWorkoutLog = async (
   userId,
   workoutId,
   duration,
   setsLogged
 ) => {
+  // 1. Fetch the workout template for details
   const workoutTemplate = await Workout.findById(workoutId);
-  if (!workoutTemplate) throw new Error("Workout template not found.");
+  if (!workoutTemplate) {
+    // Use a specific error message that can be shown to the user
+    throw new Error(
+      "Workout template for this log could not be found. It may have been deleted."
+    );
+  }
 
+  // 2. Calculate the base EXP for completing the workout
   let expGained = gameConfig.EXP.WORKOUT_COMPLETE_BASE;
   if (workoutTemplate.type === "Boss Battle") {
     expGained *= gameConfig.EXP.BOSS_BATTLE_MULTIPLIER;
   }
 
-  // Create the parent WorkoutLog to get its ID
+  // 3. Create the parent WorkoutLog to establish a start time and get its ID
   const newWorkoutLog = await WorkoutLog.create({
     userId,
     workoutId,
     duration,
-    setsLogged,
+    setsLogged, // Save the raw setsLogged here for historical detail
+    date: new Date(), // The official timestamp for this entire workout session
   });
 
   const exerciseLogsToCreate = [];
   let prCount = 0;
+  const workoutStartDate = newWorkoutLog.date; // Use this consistent start time for all checks
 
+  // 4. Loop through every set to create granular logs and check for PRs
   for (const set of setsLogged) {
+    // Sanitize and parse data
     const weight = parseFloat(set.weight);
     const reps = parseInt(set.reps, 10);
-    if (isNaN(weight) || isNaN(reps)) continue;
 
-    const isNewPR = await checkForPR(userId, set.exerciseName, weight, reps);
-    if (isNewPR) {
-      prCount++;
-      set.isPR = true; // Mutate for response
-      // Trigger PR achievement check
-      await checkAchievements(userId, "PR_HIT", {
-        exerciseName: set.exerciseName,
+    // Skip any sets with invalid data (e.g., non-numeric reps for a strength exercise)
+    if (typeof set.weight === "object" || isNaN(reps) || isNaN(weight)) {
+      // This is a cardio or timed set, no PR check needed for these.
+      set.isPR = false;
+    } else {
+      // This is a strength set, check for a PR
+      const isNewPR = await checkForPR(
+        userId,
+        set.exerciseName,
         weight,
         reps,
-        e1rm: weight * (1 + reps / 30),
-      });
-    } else {
-      set.isPR = false;
+        workoutStartDate
+      );
+
+      if (isNewPR) {
+        prCount++;
+        set.isPR = true; // Mutate the set object for the response
+        // Trigger PR achievement check, passing all relevant data
+        await checkAchievements(userId, "PR_HIT", {
+          exerciseName: set.exerciseName,
+          weight,
+          reps,
+          e1rm: weight * (1 + reps / 30),
+        });
+      } else {
+        set.isPR = false;
+      }
     }
 
+    // Add the granular log to the array to be bulk-inserted later
     exerciseLogsToCreate.push({
       userId,
       workoutLogId: newWorkoutLog._id,
       exerciseName: set.exerciseName,
       setNumber: parseInt(set.setNumber, 10),
-      weight,
-      reps,
-      date: newWorkoutLog.date,
+      weight: set.weight, // Store the Mixed type data (object or number)
+      reps: set.reps, // Store the Mixed type data (string or number)
+      date: workoutStartDate,
     });
   }
 
+  // 5. Bulk insert all the granular ExerciseLogs for efficiency
   if (exerciseLogsToCreate.length > 0) {
     await ExerciseLog.insertMany(exerciseLogsToCreate);
   }
 
+  // 6. Add bonus EXP for PRs and total sets, then update the parent log
   expGained += prCount * gameConfig.EXP.PR_BONUS;
   expGained += setsLogged.length * gameConfig.EXP.SET_LOGGED;
   newWorkoutLog.expGained = expGained;
   await newWorkoutLog.save();
 
-  // Trigger workout count achievement check
+  // 7. Trigger achievement checks related to the workout completion
   await checkAchievements(userId, "WORKOUT_LOGGED", { setsLogged });
 
+  // 8. Update the user's total EXP and check for level ups
   const user = await User.findById(userId);
   user.exp += expGained;
   const updatedUser = await checkAndApplyLevelUp(user._id);
 
-  // Return all necessary data
+  // 9. Return all necessary data to the controller that called this function
   return {
     message: `[System] Quest Complete! Workout logged. You gained ${expGained} EXP and hit ${prCount} PR(s)!`,
     log: newWorkoutLog,
-    loggedSetsWithPRs: setsLogged,
+    loggedSetsWithPRs: setsLogged, // Send back the sets with the 'isPR' flag
     updatedUserStatus: {
       level: updatedUser.level,
       exp: updatedUser.exp,

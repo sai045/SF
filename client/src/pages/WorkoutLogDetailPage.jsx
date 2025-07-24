@@ -42,6 +42,20 @@ const SetRow = styled.div`
   }
 `;
 
+const formatWeight = (weight) => {
+  // If it's a number (or a string that can be a number), it's strength training
+  if (typeof weight === "number" || !isNaN(parseFloat(weight))) {
+    // Bodyweight exercises might be logged as 0, don't show "0 kg"
+    return parseFloat(weight) > 0 ? `${weight} kg` : "Bodyweight";
+  }
+  // If it's an object, it's our cardio data
+  if (typeof weight === "object" && weight !== null) {
+    return `${weight.speed} km/h | ${weight.incline}%`;
+  }
+  // Fallback for any other case
+  return "N/A";
+};
+
 function WorkoutLogDetailPage() {
   const { logId } = useParams();
   const [logDetails, setLogDetails] = useState(null);
@@ -123,7 +137,7 @@ function WorkoutLogDetailPage() {
               {sets.map((set) => (
                 <SetRow key={set.setNumber}>
                   <span>{set.setNumber}</span>
-                  <span>{set.weight} kg</span>
+                  <span>{formatWeight(set.weight)}</span>
                   <span>{set.reps}</span>
                   <span>
                     {set.isPR && <FaStar color={theme.colors.accent} />}

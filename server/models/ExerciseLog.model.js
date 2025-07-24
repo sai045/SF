@@ -15,8 +15,10 @@ const exerciseLogSchema = new mongoose.Schema(
     },
     exerciseName: { type: String, required: true, index: true },
     setNumber: { type: Number, required: true },
-    weight: { type: Number, required: true },
-    reps: { type: Number, required: true },
+
+    weight: { type: mongoose.Schema.Types.Mixed, required: true },
+    reps: { type: mongoose.Schema.Types.Mixed, required: true },
+
     date: { type: Date, default: Date.now },
   },
   { timestamps: true }

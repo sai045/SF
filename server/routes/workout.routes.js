@@ -19,8 +19,8 @@ router.post("/log", protect, logWorkout);
 router.get("/:id", protect, getWorkoutById);
 
 // Get the last performance for a specific exercise for PR comparison
-router.get("/history/:exerciseName", protect, getExerciseHistory);
 router.get("/history/all", protect, getWorkoutHistoryList);
+router.get("/history/:exerciseName", protect, getExerciseHistory);
 router.get("/history/log/:logId", protect, getWorkoutLogDetails);
 router
   .route("/custom")
