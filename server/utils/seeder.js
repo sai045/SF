@@ -126,7 +126,7 @@ const seedIngredients = [
     fats_per_100g: 100,
     category: "Other",
     isVerified: true,
-  }
+  },
 ];
 
 // =================================================================
@@ -173,10 +173,8 @@ const seedMeals = [
   {
     name: "Snacks",
     templateType: "Snacks",
-    ingredients: [
-      { name: "Banana", quantity: "100g" },
-    ],
-  }
+    ingredients: [{ name: "Banana", quantity: "100g" }],
+  },
 ];
 
 // =================================================================
@@ -196,77 +194,56 @@ const seedMasterExercises = [
     metValue: 8.0,
     unit: "per_minute",
     category: "Warm-up",
-    youtubeLink: "c4DAnQ6DtF8",
+    youtubeLink: "iSSAk4XCsRA",
+    isBodyweight: true,
   },
   {
     name: "High Knees",
     metValue: 8.0,
     unit: "per_minute",
     category: "Warm-up",
-    youtubeLink: "oDdkKpmvfxY",
-  },
-  {
-    name: "Arm Circles",
-    metValue: 3.0,
-    unit: "per_minute",
-    category: "Warm-up",
-    youtubeLink: "v-PLw_vGg1Q",
-  },
-  {
-    name: "Torso Twists",
-    metValue: 3.0,
-    unit: "per_minute",
-    category: "Warm-up",
-    youtubeLink: "55w25vd25R4",
-  },
-  {
-    name: "Shoulder Rolls",
-    metValue: 2.5,
-    unit: "per_minute",
-    category: "Warm-up",
-    youtubeLink: "Y7-wjb01s-s",
-  },
-  {
-    name: "Cat-Cow Stretch",
-    metValue: 2.5,
-    unit: "per_minute",
-    category: "Warm-up",
-    youtubeLink: "kqnua4rHVVA",
-  },
-  {
-    name: "Scapular Push-ups",
-    metValue: 2.8,
-    unit: "per_rep_and_rest",
-    category: "Warm-up",
-    youtubeLink: "v-PLw_vGg1Q",
+    youtubeLink: "ZNDHivUg7vA",
+    isBodyweight: true,
   },
   {
     name: "Bodyweight Squats",
     metValue: 5.0,
     unit: "per_minute",
     category: "Warm-up",
-    youtubeLink: "xqvAg4ltc3o",
-  },
-  {
-    name: "Leg Swings",
-    metValue: 3.0,
-    unit: "per_minute",
-    category: "Warm-up",
-    youtubeLink: "05-65yv5-A0",
+    youtubeLink: "l83R5PblSMA",
+    isBodyweight: true,
   },
   {
     name: "Walking Lunges",
     metValue: 4.0,
     unit: "per_minute",
     category: "Warm-up",
-    youtubeLink: "L8s-5n4K_sU",
+    youtubeLink: "DlhojghkaQ0",
+    isBodyweight: true,
+  },
+  {
+    name: "Scapular Push-ups",
+    metValue: 2.8,
+    unit: "per_rep_and_rest",
+    category: "Warm-up",
+    youtubeLink: "NKekqeudgWs",
+    isBodyweight: true,
+  },
+  {
+    name: "Leg Swings",
+    metValue: 3.0,
+    unit: "per_minute",
+    category: "Warm-up",
+    youtubeLink: "AK3ALBgaEt0",
+    isBodyweight: true,
   },
   {
     name: "Push-up to Downward Dog",
     metValue: 3.8,
     unit: "per_rep_and_rest",
     category: "Warm-up",
-    youtubeLink: "a-zT0Q4y4w",
+    youtubeLink: "LCLfv60R9XA",
+    isBodyweight: true,
   },
 
   {
@@ -274,78 +251,94 @@ const seedMasterExercises = [
     metValue: 5.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "vmB1G1K7vIE",
+    youtubeLink: "ZaDlbm8E8Tg",
   },
   {
     name: "Dumbbell Overhead Press",
     metValue: 5.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "B-aVuyhvLHU",
+    youtubeLink: "Did01dFR3Lk",
   },
   {
     name: "Bent-Over Rows (Dumbbell)",
     metValue: 6.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "pYcpY20QaE8",
+    youtubeLink: "6gvmcqr226U",
   },
   {
     name: "Lat Pulldowns",
     metValue: 4.5,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "0oe_jZolp-w",
+    youtubeLink: "JGeRYIZdojU",
   },
   {
     name: "Dumbbell Bicep Curls",
     metValue: 4.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "av7-8Gvna1g",
+    youtubeLink: "cBSD6mQIPQk",
   },
   {
     name: "Triceps Pushdowns",
     metValue: 3.5,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "2-LAMcpzODo",
+    youtubeLink: "LXkCrxn3caQ",
   },
   {
     name: "Goblet Squats",
     metValue: 6.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "MeVOjvvMzf4",
+    youtubeLink: "pEGfGwp6IEA",
   },
   {
     name: "Romanian Deadlift (Dumbbell)",
     metValue: 6.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "2-LAMcpzODo",
+    youtubeLink: "xAL7lHwj30E",
   },
   {
     name: "Lunges",
     metValue: 5.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "L8s-5n4K_sU",
+    youtubeLink: "MxfTNXSFiYI",
   },
   {
     name: "Leg Press",
     metValue: 5.0,
     unit: "per_rep_and_rest",
     category: "Strength",
-    youtubeLink: "sEM_pDDG6-A",
+    youtubeLink: "yZmx_Ac3880",
   },
-
+  {
+    name: "Pull-ups",
+    metValue: 8.0,
+    unit: "per_rep_and_rest",
+    category: "Strength",
+    youtubeLink: "eGo4IaAggnpPyR6EYlbE5g",
+    isBodyweight: true,
+  },
+  {
+    name: "Push-ups",
+    metValue: 4.5,
+    unit: "per_rep_and_rest",
+    category: "Strength",
+    youtubeLink: "WDIpL0pjun0",
+    isBodyweight: true,
+  },
   {
     name: "Plank",
     metValue: 2.8,
     unit: "per_minute",
     category: "Core",
     youtubeLink: "pSHjTRCQxIw",
+    isBodyweight: true,
   },
   {
     name: "Leg Raises",
@@ -353,6 +346,7 @@ const seedMasterExercises = [
     unit: "per_rep_and_rest",
     category: "Core",
     youtubeLink: "JB2oyawG9KI",
+    isBodyweight: true,
   },
   {
     name: "Russian Twists",
@@ -367,6 +361,7 @@ const seedMasterExercises = [
     unit: "per_rep_and_rest",
     category: "Core",
     youtubeLink: "Xyd_fa5zoEU",
+    isBodyweight: true,
   },
   {
     name: "Bicycle Crunches",
@@ -374,6 +369,7 @@ const seedMasterExercises = [
     unit: "per_rep_and_rest",
     category: "Core",
     youtubeLink: "Iwyvozckjak",
+    isBodyweight: true,
   },
   {
     name: "Side Planks",
@@ -381,6 +377,7 @@ const seedMasterExercises = [
     unit: "per_minute",
     category: "Core",
     youtubeLink: "1ZfIm-GZ-38",
+    isBodyweight: true,
   },
   {
     name: "Reverse Crunches",
@@ -388,6 +385,7 @@ const seedMasterExercises = [
     unit: "per_rep_and_rest",
     category: "Core",
     youtubeLink: "hyv14e2QDq0",
+    isBodyweight: true,
   },
   {
     name: "Cable Crunches",
@@ -402,6 +400,7 @@ const seedMasterExercises = [
     unit: "per_rep_and_rest",
     category: "Core",
     youtubeLink: "wiFNA3sqjCA",
+    isBodyweight: true,
   },
 
   {
@@ -429,7 +428,6 @@ const seedMasterExercises = [
     defaultIncline_percent: 2,
   },
   { name: "Light Jog", metValue: 7.0, unit: "per_minute", category: "LISS" },
-
   {
     name: "Chest Stretch (Doorway)",
     metValue: 2.5,

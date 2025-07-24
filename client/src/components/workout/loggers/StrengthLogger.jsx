@@ -14,9 +14,10 @@ const LastPerformance = styled.p`
 `;
 
 const SetRow = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: ${(props) =>
+    props.isBodyweight ? "1fr 2fr auto" : "1fr 2fr 2fr auto"};
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -63,18 +64,21 @@ function StrengthLogger({
 }) {
   const [setsData, setSetsData] = useState([]);
 
+  const isBodyweight = masterExercise?.isBodyweight || false;
+
   useEffect(() => {
     const initialSets = Array.from({ length: exercise.sets }, (_, i) => {
       const existingLog = initialLogs.find((log) => log.setNumber === i + 1);
       return {
         setNumber: i + 1,
-        weight: existingLog?.weight || "",
+        // For bodyweight, default weight is 0 if not logged
+        weight: existingLog?.weight ?? (isBodyweight ? "0" : ""),
         reps: existingLog?.reps || "",
         isLogged: !!existingLog,
       };
     });
     setSetsData(initialSets);
-  }, [exercise, initialLogs]);
+  }, [exercise, initialLogs, isBodyweight]);
 
   const handleInputChange = (index, field, value) => {
     const newSetsData = [...setsData];
@@ -86,11 +90,17 @@ function StrengthLogger({
     const newSetsData = [...setsData];
     const currentSet = newSetsData[index];
 
+    // Validation: Reps are always required. Weight is only required if it's NOT a bodyweight exercise.
+    const reps = parseInt(currentSet.reps, 10);
+    const weight = parseFloat(currentSet.weight);
+
     if (!currentSet.isLogged) {
-      const weight = parseFloat(currentSet.weight);
-      const reps = parseInt(currentSet.reps, 10);
-      if (isNaN(weight) || isNaN(reps) || weight < 0 || reps < 0) {
-        alert("Please enter valid numbers for weight and reps.");
+      if (isNaN(reps) || reps < 0) {
+        alert("Please enter a valid number for reps.");
+        return;
+      }
+      if (!isBodyweight && (isNaN(weight) || weight < 0)) {
+        alert("Please enter a valid number for weight.");
         return;
       }
     }
@@ -101,7 +111,8 @@ function StrengthLogger({
     onSetUpdate({
       exerciseName: exercise.name,
       setNumber: currentSet.setNumber,
-      weight: currentSet.weight,
+      // Ensure weight is sent as 0 for bodyweight exercises if the input is empty
+      weight: isBodyweight ? currentSet.weight || "0" : currentSet.weight,
       reps: currentSet.reps,
     });
   };
@@ -120,16 +131,17 @@ function StrengthLogger({
       <div>
         {setsData.map((set, index) => (
           <SetRow key={index} isLogged={set.isLogged}>
-            <span>Set {set.setNumber}</span>
-            <SetInput
-              type="number"
-              placeholder="kg"
-              value={set.weight}
-              onChange={(e) =>
-                handleInputChange(index, "weight", e.target.value)
-              }
-              disabled={set.isLogged}
-            />
+            {!isBodyweight && (
+              <SetInput
+                type="number"
+                placeholder="kg"
+                value={set.weight}
+                onChange={(e) =>
+                  handleInputChange(index, "weight", e.target.value)
+                }
+                disabled={set.isLogged}
+              />
+            )}
             <SetInput
               type="number"
               placeholder="reps"
@@ -139,7 +151,9 @@ function StrengthLogger({
             />
             <LogButton
               onClick={() => handleToggleLog(index)}
-              disabled={!set.isLogged && (!set.weight || !set.reps)}
+              disabled={
+                !set.isLogged && ((!isBodyweight && !set.weight) || !set.reps)
+              }
               style={{
                 backgroundColor: set.isLogged
                   ? theme.colors.accent

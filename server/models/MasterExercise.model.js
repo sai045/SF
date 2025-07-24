@@ -13,7 +13,8 @@ const masterExerciseSchema = new mongoose.Schema({
     enum: ["Warm-up", "Strength", "Core", "HIIT", "LISS", "Cool-down"],
     required: true,
   },
-  youtubeLink: { type: String, trim: true }, 
+  isBodyweight: { type: Boolean, default: false },
+  youtubeLink: { type: String, trim: true },
   defaultSpeed_kmph: { type: Number },
   defaultIncline_percent: { type: Number },
 });
