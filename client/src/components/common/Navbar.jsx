@@ -7,10 +7,9 @@ import {
   FaHome,
   FaUtensils,
   FaDumbbell,
+  FaBook,
   FaUser,
   FaSignOutAlt,
-  FaBook,
-  FaCalendarAlt,
 } from "react-icons/fa";
 
 const NavContainer = styled.nav`
@@ -68,6 +67,7 @@ const NavItem = styled(NavLink)`
     font-size: 0.7rem;
     margin-top: 0.25rem;
     font-family: ${theme.fonts.body};
+    letter-spacing: 0.5px;
   }
 
   &.active {
@@ -90,10 +90,48 @@ const NavItem = styled(NavLink)`
   }
 `;
 
-const LogoutButton = styled(NavItem).attrs({ as: "button" })`
+const LogoutButton = styled.button`
+  /* Inherits NavItem styles but as a button */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: ${theme.colors.textMuted};
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease-in-out;
   background: none;
   border: none;
   cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+
+  span {
+    font-size: 1.5rem;
+  }
+  p {
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    font-family: ${theme.fonts.body};
+    letter-spacing: 0.5px;
+  }
+
+  &:hover {
+    color: ${theme.colors.danger};
+  }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 1.5rem 2rem;
+    p {
+      margin-top: 0;
+      margin-left: 1rem;
+      font-size: 1.1rem;
+      font-family: ${theme.fonts.heading};
+      letter-spacing: 1px;
+    }
+  }
 `;
 
 function Navbar() {
@@ -120,9 +158,15 @@ function Navbar() {
           </span>{" "}
           <p>Nutrition</p>
         </NavItem>
-        <NavItem to="/history/summary">
+        <NavItem to="/workouts">
           <span>
-            <FaCalendarAlt />
+            <FaDumbbell />
+          </span>{" "}
+          <p>My Workouts</p>
+        </NavItem>
+        <NavItem to="/history">
+          <span>
+            <FaBook />
           </span>{" "}
           <p>History</p>
         </NavItem>
@@ -131,12 +175,6 @@ function Navbar() {
             <FaUser />
           </span>{" "}
           <p>Profile</p>
-        </NavItem>
-        <NavItem to="/history/workouts">
-          <span>
-            <FaBook />
-          </span>{" "}
-          <p>Logbook</p>
         </NavItem>
       </NavItemGroup>
       <NavItemGroup>

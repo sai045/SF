@@ -122,6 +122,47 @@ function WorkoutPage() {
     fetchSessionAndMasterData();
   }, [sessionId]);
 
+  useEffect(() => {
+    // This effect runs when the user navigates away from an exercise (index changes).
+    // It checks if the PREVIOUS exercise was a timed/cardio one that wasn't logged.
+    const previousExerciseIndex = currentExerciseIndex - 1;
+    if (previousExerciseIndex < 0) return; // Don't run on the first exercise
+
+    const previousExercise = sessionExercises[previousExerciseIndex];
+    const masterEx = masterExercises.find(
+      (ex) => ex.name === previousExercise.name
+    );
+
+    if (
+      masterEx &&
+      (masterEx.unit === "per_minute" ||
+        masterEx.category === "LISS" ||
+        masterEx.category === "HIIT")
+    ) {
+      // Check if this exercise has already been logged
+      const isAlreadyLogged = workoutLogs.some(
+        (log) => log.exerciseName === previousExercise.name
+      );
+
+      if (!isAlreadyLogged) {
+        // Auto-log it with the planned values
+        const autoLog = {
+          exerciseName: previousExercise.name,
+          setNumber: 1,
+          weight: {
+            speed: masterEx.defaultSpeed_kmph || 0,
+            incline: masterEx.defaultIncline_percent || 0,
+          },
+          reps: previousExercise.reps,
+        };
+
+        const newLogs = [...workoutLogs, autoLog];
+        setWorkoutLogs(newLogs);
+        debouncedUpdateSets(sessionId, newLogs);
+      }
+    }
+  }, [currentExerciseIndex]);
+
   const handleSetUpdate = (updatedSetLog) => {
     const existingLogIndex = workoutLogs.findIndex(
       (log) =>

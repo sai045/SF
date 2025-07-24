@@ -57,3 +57,15 @@ export const getMasterExerciseList = async () => {
   const response = await apiClient.get("/custom/master-list");
   return response.data;
 };
+
+export const getPerformedExercises = async () => {
+  const response = await apiClient.get("/history/performed-exercises");
+  return response.data;
+};
+
+export const getSingleExerciseHistory = async (exerciseName) => {
+  const response = await apiClient.get(
+    `/history/exercise/${encodeURIComponent(exerciseName)}`
+  );
+  return response.data;
+};

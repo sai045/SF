@@ -301,14 +301,59 @@ const getMasterExerciseList = async (req, res) => {
   }
 };
 
+// @desc    Get a list of all unique exercises a user has performed
+// @route   GET /api/workouts/history/performed-exercises
+// @access  Private
+const getPerformedExercises = async (req, res) => {
+  try {
+    const distinctExercises = await ExerciseLog.distinct("exerciseName", {
+      userId: req.user.id,
+    });
+    res.json(distinctExercises);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error fetching performed exercises." });
+  }
+};
+
+// @desc    Get the full historical data for a single exercise
+// @route   GET /api/workouts/history/exercise/:exerciseName
+// @access  Private
+const getSingleExerciseHistory = async (req, res) => {
+  try {
+    const exerciseName = decodeURIComponent(req.params.exerciseName);
+    const userId = req.user.id;
+
+    const masterExercise = await MasterExercise.findOne({ name: exerciseName });
+    if (!masterExercise) {
+      return res
+        .status(404)
+        .json({ message: "Master exercise data not found." });
+    }
+
+    const history = await ExerciseLog.find({ userId, exerciseName }).sort({
+      date: "asc",
+    });
+
+    res.json({ masterExercise, history });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error fetching exercise history." });
+  }
+};
+
 module.exports = {
   getWorkoutById,
   logWorkout,
   getExerciseHistory,
+  getSingleExerciseHistory,
   getWorkoutHistoryList,
   getWorkoutLogDetails,
   createCustomWorkout,
   getMyWorkouts,
   createPermanentWorkoutLog,
   getMasterExerciseList,
+  getPerformedExercises,
 };

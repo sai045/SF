@@ -1,9 +1,9 @@
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
+import { Toaster } from "react-hot-toast";
 import { GlobalStyle } from "./styles/GlobalStyle";
 import { theme } from "./styles/theme";
-import { Toaster } from "react-hot-toast";
 
 import Layout from "./components/common/Layout";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -14,13 +14,16 @@ import DashboardPage from "./pages/DashboardPage";
 import WorkoutPage from "./pages/WorkoutPage";
 import NutritionDashboardPage from "./pages/NutritionDashboardPage";
 import ProfilePage from "./pages/ProfilePage";
-import BodyMetricsPage from "./pages/BodyMetricsPage";
-import WorkoutStartPage from "./pages/WorkoutStartPage";
-import WorkoutHistoryListPage from "./pages/WorkoutHistoryListPage";
-import WorkoutLogDetailPage from "./pages/WorkoutLogDetailPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import MyWorkoutsPage from "./pages/MyWorkoutsPage";
 import WorkoutBuilderPage from "./pages/WorkoutBuilderPage";
+import BodyMetricsPage from "./pages/BodyMetricsPage";
+import WorkoutHistoryListPage from "./pages/WorkoutHistoryListPage";
+import WorkoutLogDetailPage from "./pages/WorkoutLogDetailPage";
+import HistoryPage from "./pages/HistoryPage";
+import ExerciseHistoryListPage from "./pages/ExerciseHistoryListPage";
+import ExerciseDetailPage from "./pages/ExerciseDetailPage";
+import WorkoutStartPage from "./pages/WorkoutStartPage";
 import HistorySummaryPage from "./pages/HistorySummaryPage";
 
 function App() {
@@ -39,6 +42,7 @@ function App() {
           },
         }}
       />
+
       {["/login", "/register"].includes(location.pathname) ? (
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -52,14 +56,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workout/:workoutId"
-              element={
-                <ProtectedRoute>
-                  <WorkoutPage />
                 </ProtectedRoute>
               }
             />
@@ -88,6 +84,31 @@ function App() {
               }
             />
             <Route
+              path="/achievements"
+              element={
+                <ProtectedRoute>
+                  <AchievementsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/workouts"
+              element={
+                <ProtectedRoute>
+                  <MyWorkoutsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workouts/create"
+              element={
+                <ProtectedRoute>
+                  <WorkoutBuilderPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/workout/start/:workoutId"
               element={
                 <ProtectedRoute>
@@ -100,6 +121,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WorkoutPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute>
+                  <HistoryPage />
                 </ProtectedRoute>
               }
             />
@@ -120,26 +150,18 @@ function App() {
               }
             />
             <Route
-              path="/achievements"
+              path="/history/exercises"
               element={
                 <ProtectedRoute>
-                  <AchievementsPage />
+                  <ExerciseHistoryListPage />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/workouts"
+              path="/history/exercise/:exerciseName"
               element={
                 <ProtectedRoute>
-                  <MyWorkoutsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workouts/create"
-              element={
-                <ProtectedRoute>
-                  <WorkoutBuilderPage />
+                  <ExerciseDetailPage />
                 </ProtectedRoute>
               }
             />
