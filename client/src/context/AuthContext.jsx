@@ -18,31 +18,43 @@ export const AuthProvider = ({ children }) => {
         setDashboardSummary(data);
       } catch (error) {
         console.error("Failed to refresh dashboard data", error);
+        // If we get a 401 here, it means the token is bad, so we should log out.
+        if (error.response?.status === 401) {
+          logout();
+        }
       }
     }
   };
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      refreshDashboardSummary(); // Fetch initial dashboard data on load
+  // This function is for full state replacement (login/register)
+  const setFullUser = (newUserData) => {
+    if (newUserData) {
+      localStorage.setItem("user", JSON.stringify(newUserData));
+      setUser(newUserData);
+    } else {
+      localStorage.removeItem("user");
+      setUser(null);
     }
-    setLoading(false);
-  }, []);
+  };
 
-  const updateFullUserState = (newUserData) => {
-    // This function completely replaces the user state, for login/register/profile updates
-    localStorage.setItem("user", JSON.stringify(newUserData));
-    setUser(newUserData);
-    refreshDashboardSummary();
+  // --- THIS IS THE NEW, SAFER FUNCTION FOR PROFILE UPDATES ---
+  const updateUserProfileData = (profileUpdate) => {
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    if (!currentUser) return; // Safety check
+
+    // Merge the new profile data with the existing user data, preserving the token
+    const updatedUser = {
+      ...currentUser, // Keeps the token and other client-side state
+      ...profileUpdate, // Overwrites fields like username, physicalMetrics, etc.
+    };
+
+    setFullUser(updatedUser);
+    refreshDashboardSummary(); // Refresh TDEE with new weight
   };
 
   const updateUserStats = (updatedStats) => {
     const currentUserData = JSON.parse(localStorage.getItem("user"));
-
-    // --- CHECK FOR LEVEL UP ---
-    if (updatedStats.level > currentUserData.level) {
+    if (currentUserData.level < updatedStats.level) {
       setLevelUpInfo({
         oldLevel: currentUserData.level,
         newLevel: updatedStats.level,
@@ -50,31 +62,38 @@ export const AuthProvider = ({ children }) => {
     }
 
     const updatedData = { ...currentUserData, ...updatedStats };
-    localStorage.setItem("user", JSON.stringify(updatedData));
-    setUser(updatedData);
+    setFullUser(updatedData);
     refreshDashboardSummary();
   };
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      refreshDashboardSummary();
+    }
+    setLoading(false);
+  }, []);
+
   const login = async (email, password) => {
     const userData = await authService.login({ email, password });
-    updateFullUserState(userData);
+    setFullUser(userData);
     return userData;
   };
 
   const register = async (username, email, password) => {
     const userData = await authService.register({ username, email, password });
-    updateFullUserState(userData);
+    setFullUser(userData);
     return userData;
   };
 
   const logout = () => {
-    authService.logout();
-    setUser(null);
+    setFullUser(null);
   };
 
   const value = {
     user,
-    setUser: updateFullUserState,
+    setUser: updateUserProfileData, // The page's setUser now calls our new safe function
     updateUserStats,
     isAuthenticated: !!user,
     loading,

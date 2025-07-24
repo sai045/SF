@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { updateUserProfile } from "../../api/user.api.js";
 import { theme } from "../../styles/theme";
 import { Input, Button, FormCard, Title } from "../common/Styled";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -60,13 +60,14 @@ function ProfileSetupWizard() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Send the form data to the backend
       const updatedUser = await updateUserProfile(formData);
-      // Crucially update the user context so the app knows setup is complete
+      // This call is now SAFE because the 'setUser' from useAuth() knows how to merge
+      // the data without destroying the token.
       setUser(updatedUser);
-      // The modal will disappear automatically from Layout because the condition to show it will now be false
+      toast.success("Profile updated successfully!");
     } catch (error) {
-      toast("Failed to setup profile. Please fill all fields.");
+      toast.error("Failed to update profile.");
+    } finally {
       setLoading(false);
     }
   };

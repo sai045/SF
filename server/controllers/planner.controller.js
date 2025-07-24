@@ -47,13 +47,24 @@ const getDashboardData = async (req, res) => {
       date: { $gte: startOfDay, $lte: endOfDay },
     }).populate("workoutId");
 
+    // Ensure physical metrics exist before calculating
+    if (!user.physicalMetrics || !user.physicalMetrics.weight_kg) {
+      // If the user hasn't completed setup, send back zeros.
+      return res.json({
+        caloriesIn: Math.round(caloriesIn),
+        estimatedTDEE: 0,
+        stepCount: 0,
+        todaysWorkoutQuest: null, // Can't have a quest without a plan
+      });
+    }
+
     const bmr = user.physicalMetrics.bmr || 0;
     const stepCount = activityLog ? activityLog.steps.count : 0;
     const stepCalories = calculateStepCalories(
       stepCount,
       user.physicalMetrics.weight_kg
     );
-    const workoutCalories = calculateWorkoutCalories(
+    const workoutCalories = await calculateWorkoutCalories(
       historicalWorkoutLogs,
       user.physicalMetrics.weight_kg
     );

@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../context/AuthContext";
-import { AppContainer, Title, Button } from "../components/common/Styled";
-import { getProfileStats } from "../api/user.api.js";
+import {
+  AppContainer,
+  Title,
+  Button,
+  FormCard,
+  Input,
+  ErrorMessage,
+} from "../components/common/Styled";
+import { getProfileStats, updateUserProfile } from "../api/user.api.js";
 import StatBox from "../components/profile/StatBox";
 import { theme } from "../styles/theme";
-import { FaCrown, FaDumbbell, FaWeight } from "react-icons/fa";
+import { FaCrown, FaDumbbell } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const ProfileHeader = styled.div`
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 `;
 
 const HunterRank = styled.span`
@@ -23,13 +32,6 @@ const HunterRank = styled.span`
   border-radius: 50px;
   border: 2px solid ${theme.colors.accent};
   margin-top: 0.5rem;
-`;
-
-const EXPBarContainer = styled.div`
-  width: 100%;
-  max-width: 400px;
-  margin: 1rem auto 0 auto;
-  // ... (Styling for an EXP bar component would go here)
 `;
 
 const ProfileGrid = styled.div`
@@ -76,6 +78,9 @@ const PRItem = styled.li`
   span:first-child {
     font-weight: bold;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   span:last-child {
@@ -85,27 +90,67 @@ const PRItem = styled.li`
   }
 `;
 
+const SelectInput = styled.select`
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid ${theme.colors.textMuted};
+  border-radius: 4px;
+  color: ${theme.colors.text};
+  font-size: 1rem;
+`;
+
 function ProfilePage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    age: user.physicalMetrics?.age || "",
+    weight_kg: user.physicalMetrics?.weight_kg || "",
+    height_cm: user.physicalMetrics?.height_cm || "",
+    gender: user.physicalMetrics?.gender || "male",
+  });
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
     getProfileStats()
       .then((data) => {
         setStats(data);
-        setLoading(false);
       })
       .catch((err) => {
         console.error(err);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  if (loading || !stats)
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormLoading(true);
+    try {
+      const updatedUser = await updateUserProfile(formData);
+      // This call is now SAFE because the 'setUser' from useAuth() knows how to merge
+      // the data without destroying the token.
+      setUser(updatedUser);
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update profile.");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  if (loading)
     return (
-      <AppContainer>
-        <h2>Loading Hunter Stats...</h2>
+      <AppContainer style={{ justifyContent: "center" }}>
+        <LoadingSpinner />
       </AppContainer>
     );
 
@@ -113,7 +158,6 @@ function ProfilePage() {
     <AppContainer>
       <ProfileHeader>
         <Title>STATUS: {user.username}</Title>
-        <p style={{ color: theme.colors.textMuted }}>LV. {user.level}</p>
         <p style={{ color: theme.colors.textMuted, fontStyle: "italic" }}>
           "{user.title}"
         </p>
@@ -121,59 +165,132 @@ function ProfilePage() {
         <HunterRank>{user.rank}-RANK HUNTER</HunterRank>
       </ProfileHeader>
 
-      <Link
-        to="/achievements"
-        style={{ textAlign: "center", marginBottom: "2rem" }}
+      <div
+        style={{
+          display: "flex",
+          gap: "1rem",
+          justifyContent: "center",
+          marginBottom: "2rem",
+        }}
       >
-        <Button style={{ width: "auto", padding: "1rem 2rem" }}>
-          View Achievements
-        </Button>
-      </Link>
+        <Link to="/achievements">
+          <Button style={{ width: "auto", padding: "1rem 2rem" }}>
+            View Achievements
+          </Button>
+        </Link>
+        <Link to="/profile/metrics">
+          <Button
+            style={{
+              width: "auto",
+              padding: "1rem 2rem",
+              background: theme.colors.secondary,
+            }}
+          >
+            View Progress Charts
+          </Button>
+        </Link>
+      </div>
 
       <ProfileGrid>
-        <SectionCard>
-          <h2>Lifetime Statistics</h2>
-          <StatsGrid>
-            <StatBox
-              value={stats.totalWorkouts}
-              label="Workouts Completed"
-              color={theme.colors.primary}
-            />
-            <StatBox
-              value={`${(stats.totalVolume / 1000).toFixed(1)}k`}
-              label="Total Volume (kg)"
-              color={theme.colors.danger}
-            />
-            {/* Add more stats like "Meals Logged" later */}
-            <StatBox
-              value={user.streaks?.workout?.count || 0}
-              label="Workout Streak"
-              color={theme.colors.secondary}
-            />
-          </StatsGrid>
-        </SectionCard>
+        {stats && (
+          <>
+            <SectionCard>
+              <h2>Lifetime Statistics</h2>
+              <StatsGrid>
+                <StatBox
+                  value={stats.totalWorkouts}
+                  label="Workouts Completed"
+                  color={theme.colors.primary}
+                />
+                <StatBox
+                  value={`${(stats.totalVolume / 1000).toFixed(1)}k`}
+                  label="Total Volume (kg)"
+                  color={theme.colors.danger}
+                />
+                <StatBox
+                  value={user.streaks?.workout?.count || 0}
+                  label="Workout Streak"
+                  color={theme.colors.secondary}
+                />
+              </StatsGrid>
+            </SectionCard>
 
-        <SectionCard>
-          <h2>
-            <FaCrown /> Personal Records (e1RM)
+            <SectionCard>
+              <h2>
+                <FaCrown /> Personal Records (e1RM)
+              </h2>
+              <PRList>
+                {stats.topPRs.length > 0 ? (
+                  stats.topPRs.map((pr) => (
+                    <PRItem key={pr.exerciseName}>
+                      <span>
+                        <FaDumbbell /> {pr.exerciseName}
+                      </span>
+                      <span>{Math.round(pr.e1rm)} kg</span>
+                    </PRItem>
+                  ))
+                ) : (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: theme.colors.textMuted,
+                    }}
+                  >
+                    Log some workouts to see your PRs here!
+                  </p>
+                )}
+              </PRList>
+            </SectionCard>
+          </>
+        )}
+
+        <FormCard as="form" onSubmit={handleSubmit}>
+          <h2 style={{ textAlign: "center", marginBottom: "2rem" }}>
+            Update Physical Metrics
           </h2>
-          <PRList>
-            {stats.topPRs.length > 0 ? (
-              stats.topPRs.map((pr) => (
-                <PRItem key={pr.exerciseName}>
-                  <span>
-                    <FaDumbbell /> {pr.exerciseName}
-                  </span>
-                  <span>{Math.round(pr.e1rm)} kg</span>
-                </PRItem>
-              ))
-            ) : (
-              <p style={{ textAlign: "center" }}>
-                Log some workouts to see your PRs here!
-              </p>
-            )}
-          </PRList>
-        </SectionCard>
+
+          <label>Age</label>
+          <Input
+            type="number"
+            name="age"
+            value={formData.age}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Weight (kg)</label>
+          <Input
+            type="number"
+            name="weight_kg"
+            step="0.1"
+            value={formData.weight_kg}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Height (cm)</label>
+          <Input
+            type="number"
+            name="height_cm"
+            value={formData.height_cm}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Gender</label>
+          <SelectInput
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+          >
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </SelectInput>
+
+          <Button type="submit" disabled={formLoading}>
+            {formLoading ? "UPDATING..." : "SAVE CHANGES"}
+          </Button>
+        </FormCard>
       </ProfileGrid>
     </AppContainer>
   );
