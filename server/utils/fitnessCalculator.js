@@ -60,21 +60,37 @@ const calculateWorkoutCalories = async (workoutLogs, userWeightKg) => {
     let durationMinutes = 0;
     let metValue = masterEx.metValue;
 
+    // --- START OF THE NEW, INTELLIGENT FIX ---
     if (masterEx.category === "LISS" || masterEx.category === "HIIT") {
-      let userSpeed = masterEx.defaultSpeed_kmph;
-      let userIncline = masterEx.defaultIncline_percent;
+      let userSpeed = 0;
+      let userIncline = 0;
 
       if (typeof set.weight === "object" && set.weight !== null) {
-        if (set.weight.speed) userSpeed = parseFloat(set.weight.speed);
-        if (set.weight.incline) userIncline = parseFloat(set.weight.incline);
+        userSpeed = parseFloat(set.weight.speed) || 0;
+        userIncline = parseFloat(set.weight.incline) || 0;
       }
 
-      metValue =
-        masterEx.metValue +
-        (userSpeed - masterEx.defaultSpeed_kmph) * 0.5 +
-        userIncline * 0.3;
-      metValue = Math.max(2.0, metValue);
+      // --- LOGIC BRANCH 1: Exercise HAS default speed/incline (e.g., LISS Brisk Walk) ---
+      if (masterEx.defaultSpeed_kmph != null) {
+        const defaultSpeed = masterEx.defaultSpeed_kmph;
+        metValue =
+          masterEx.metValue +
+          (userSpeed - defaultSpeed) * 0.5 +
+          userIncline * 0.3;
+      }
+      // --- LOGIC BRANCH 2: Exercise DOES NOT have defaults (e.g., Light Jog) ---
+      else if (userSpeed > 0) {
+        // Assume a standard speed for the base MET value. For jogging, 8 km/h is a reasonable standard for a MET of 7.0.
+        const standardSpeed = 8.0;
+        const speedRatio = userSpeed / standardSpeed;
+        // Adjust the MET value proportionally to the user's speed + add incline bonus.
+        metValue = masterEx.metValue * speedRatio + userIncline * 0.3;
+      }
+      // If neither of the above, metValue just remains the base masterEx.metValue
+
+      metValue = Math.max(2.0, metValue); // Safety net
     }
+    // --- END OF THE NEW, INTELLIGENT FIX ---
 
     if (masterEx.unit === "per_minute") {
       const repString = set.reps.toString().toLowerCase();
