@@ -256,15 +256,11 @@ function WorkoutPage() {
               defaultValue=""
             >
               <option value="">-- Select an exercise to add --</option>
-              {masterExercises
-                .filter(
-                  (ex) => ex.category === "Strength" || ex.category === "Core"
-                )
-                .map((ex) => (
-                  <option key={ex._id} value={ex.name}>
-                    {ex.name}
-                  </option>
-                ))}
+              {masterExercises.map((ex) => (
+                <option key={ex._id} value={ex.name}>
+                  {ex.name}
+                </option>
+              ))}
             </SelectExercise>
           ) : (
             <Button
