@@ -141,33 +141,38 @@ const updateUserProfile = async (req, res) => {
 // @access  Private
 const getProfileStats = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = new mongoose.Types.ObjectId(req.user._id);
 
-    // 1. Get total workouts completed from WorkoutLog
     const totalWorkouts = await WorkoutLog.countDocuments({ userId });
 
-    // 2. Aggregate total volume lifted and top PRs from ExerciseLog
+    // --- FIX APPLIED HERE: Filter for numeric types before calculating totalVolume ---
     const exerciseStats = await ExerciseLog.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
-        $addFields: {
-          // Calculate e1RM for each set
-          e1rm: {
-            $multiply: ["$weight", { $add: [1, { $divide: ["$reps", 30] }] }],
-          },
+        $match: {
+          userId: userId,
+          // Only include documents where both weight and reps are numbers
+          weight: { $type: "number" },
+          reps: { $type: "number" },
         },
       },
       {
         $group: {
-          _id: null, // Group all documents together
+          _id: null,
           totalVolume: { $sum: { $multiply: ["$weight", "$reps"] } },
         },
       },
     ]);
 
-    // 3. Get best PRs (e.g., top 5 by e1RM)
+    // --- FIX APPLIED HERE: Filter for numeric types before calculating top PRs ---
     const topPRs = await ExerciseLog.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $match: {
+          userId: userId,
+          // Only include documents where both weight and reps are numbers
+          weight: { $type: "number" },
+          reps: { $type: "number" },
+        },
+      },
       {
         $addFields: {
           e1rm: {
@@ -175,7 +180,6 @@ const getProfileStats = async (req, res) => {
           },
         },
       },
-      // Find the best set for each exercise
       { $sort: { e1rm: -1 } },
       {
         $group: {
@@ -183,7 +187,6 @@ const getProfileStats = async (req, res) => {
           bestSet: { $first: "$$ROOT" },
         },
       },
-      // Sort the exercises by their best set's e1RM
       { $sort: { "bestSet.e1rm": -1 } },
       { $limit: 5 },
     ]);

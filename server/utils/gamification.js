@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const User = require("../models/User.model");
 const ExerciseLog = require("../models/ExerciseLog.model");
+const MasterExercise = require("../models/MasterExercise.model");
 const { calculateE1RM } = require("./fitnessCalculator");
 
 const config = {
@@ -72,37 +73,60 @@ const checkForPR = async (
   workoutStartDate
 ) => {
   try {
-    const newE1RM = calculateE1RM(newWeight, newReps);
-    if (isNaN(newE1RM)) return false;
+    const masterEx = await MasterExercise.findOne({ name: exerciseName });
+    if (!masterEx) return false;
 
-    // Find the best e1RM from all logs BEFORE the current workout started.
-    const historicalBests = await ExerciseLog.aggregate([
-      {
-        $match: {
-          userId: new mongoose.Types.ObjectId(userId),
-          exerciseName,
-          // --- THIS IS THE CRITICAL FIX ---
-          // Only consider logs from previous sessions.
-          date: { $lt: workoutStartDate },
-          // --- END OF FIX ---
-        },
-      },
-      {
-        $addFields: {
-          e1rm: {
-            $multiply: ["$weight", { $add: [1, { $divide: ["$reps", 30] }] }],
+    if (masterEx.isBodyweight) {
+      // Bodyweight logic (based on max reps)
+      const bestPreviousSet = await ExerciseLog.findOne({
+        userId,
+        exerciseName,
+        date: { $lt: workoutStartDate },
+        // Ensure we only compare against numeric reps
+        reps: { $type: "number" },
+      }).sort({ reps: -1 });
+
+      const previousBestReps = bestPreviousSet ? bestPreviousSet.reps : 0;
+      return newReps > previousBestReps;
+    } else {
+      // Weighted Exercise Logic (based on e1RM)
+      const newE1RM = calculateE1RM(newWeight, newReps);
+      if (isNaN(newE1RM)) return false;
+
+      const historicalBests = await ExerciseLog.aggregate([
+        {
+          $match: {
+            userId: new mongoose.Types.ObjectId(userId),
+            exerciseName,
+            date: { $lt: workoutStartDate },
+            // --- THIS IS THE CRITICAL FIX ---
+            // Only include documents where 'reps' and 'weight' are numbers in this pipeline.
+            reps: { $type: "number" },
+            weight: { $type: "number" },
+            // --- END OF FIX ---
           },
         },
-      },
-      { $group: { _id: null, maxE1RM: { $max: "$e1rm" } } },
-    ]);
+        {
+          $addFields: {
+            e1rm: {
+              $multiply: ["$weight", { $add: [1, { $divide: ["$reps", 30] }] }],
+            },
+          },
+        },
+        { $group: { _id: null, maxE1RM: { $max: "$e1rm" } } },
+      ]);
 
-    const previousBestE1RM =
-      historicalBests.length > 0 ? historicalBests[0].maxE1RM : 0;
+      const previousBestE1RM =
+        historicalBests.length > 0 ? historicalBests[0].maxE1RM : 0;
 
-    return newE1RM > previousBestE1RM + 0.01;
+      return newE1RM > previousBestE1RM + 0.01;
+    }
   } catch (error) {
-    console.error("Error checking for PR:", error);
+    // We now log the specific error for better debugging in the future
+    console.error(
+      `Error checking for PR for exercise "${exerciseName}":`,
+      error
+    );
     return false;
   }
 };

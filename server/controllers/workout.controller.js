@@ -191,19 +191,50 @@ const getWorkoutHistoryList = async (req, res) => {
   }
 };
 
-// @desc    Get the full details of a single historical workout log
+// @desc    Get the full details of a single historical workout log AND CALCULATE PRs
 // @route   GET /api/workouts/history/log/:logId
 // @access  Private
 const getWorkoutLogDetails = async (req, res) => {
   try {
-    const log = await WorkoutLog.findById(req.params.logId).populate(
-      "workoutId"
-    ); // Get full workout template details
+    const log = await WorkoutLog.findById(req.params.logId)
+      .populate("workoutId")
+      .lean(); // Use .lean() for a plain JavaScript object, which is faster and easier to modify
 
-    // Security check: ensure the log belongs to the requesting user
     if (!log || log.userId.toString() !== req.user.id) {
       return res.status(404).json({ message: "Workout log not found." });
     }
+
+    // --- THIS IS THE NEW DYNAMIC PR CALCULATION ---
+    // Create a new array of sets by mapping over the existing ones
+    const setsWithPRs = await Promise.all(
+      log.setsLogged.map(async (set) => {
+        let isPR = false;
+        // Only check for PRs on strength/bodyweight sets (where reps and weight are numbers)
+        const weight = parseFloat(set.weight);
+        const reps = parseInt(set.reps, 10);
+
+        if (!isNaN(weight) && !isNaN(reps)) {
+          // Call our existing checkForPR function. The log's date is the workout's start time.
+          isPR = await checkForPR(
+            req.user.id,
+            set.exerciseName,
+            weight,
+            reps,
+            log.date
+          );
+        }
+
+        // Return a new object that includes the original set data plus the calculated isPR flag
+        return {
+          ...set,
+          isPR: isPR,
+        };
+      })
+    );
+    // --- END OF NEW LOGIC ---
+
+    // Replace the old setsLogged array with our new, enhanced one
+    log.setsLogged = setsWithPRs;
 
     res.json(log);
   } catch (error) {
