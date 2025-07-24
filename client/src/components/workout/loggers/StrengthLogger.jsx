@@ -5,18 +5,13 @@ import { theme } from "../../../styles/theme";
 import { FaEdit, FaCheck } from "react-icons/fa";
 
 const LastPerformance = styled.p`
-  color: ${theme.colors.accent};
-  background: rgba(241, 196, 15, 0.1);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: bold;
-  text-align: center;
+  /* ... same as before ... */
 `;
 
 const SetRow = styled.div`
   display: grid;
   grid-template-columns: ${(props) =>
-    props.isBodyweight ? "1fr 2fr auto" : "1fr 2fr 2fr auto"};
+    props.isBodyweight ? "auto 1fr auto" : "auto 1fr 1fr auto"};
   align-items: center;
   gap: 1rem;
   padding: 1rem;
@@ -36,7 +31,7 @@ const SetRow = styled.div`
 `;
 
 const SetInput = styled(Input)`
-  width: 80px;
+  width: 100%;
   margin: 0;
   text-align: center;
   &:disabled {
@@ -64,15 +59,16 @@ function StrengthLogger({
   masterExercise,
 }) {
   const [setsData, setSetsData] = useState([]);
-
   const isBodyweight = masterExercise?.isBodyweight || false;
 
   useEffect(() => {
     const initialSets = Array.from({ length: exercise.sets }, (_, i) => {
-      const existingLog = initialLogs.find((log) => log.setNumber === i + 1);
+      const setNumber = i + 1;
+      const existingLog = initialLogs.find(
+        (log) => log.setNumber === setNumber
+      );
       return {
-        setNumber: i + 1,
-        // For bodyweight, default weight is 0 if not logged
+        setNumber: setNumber,
         weight: existingLog?.weight ?? (isBodyweight ? "0" : ""),
         reps: existingLog?.reps || "",
         isLogged: !!existingLog,
@@ -91,11 +87,18 @@ function StrengthLogger({
     const newSetsData = [...setsData];
     const currentSet = newSetsData[index];
 
-    // Validation: Reps are always required. Weight is only required if it's NOT a bodyweight exercise.
-    const reps = parseInt(currentSet.reps, 10);
-    const weight = parseFloat(currentSet.weight);
+    // This toggles the 'isLogged' state for editing.
+    const isNowEditing = currentSet.isLogged;
 
-    if (!currentSet.isLogged) {
+    if (isNowEditing) {
+      // If user clicks "Edit", just unlock the fields.
+      currentSet.isLogged = false;
+      setSetsData(newSetsData);
+    } else {
+      // If user clicks "Log Set", validate and save.
+      const reps = parseInt(currentSet.reps, 10);
+      const weight = parseFloat(currentSet.weight);
+
       if (isNaN(reps) || reps < 0) {
         alert("Please enter a valid number for reps.");
         return;
@@ -104,25 +107,26 @@ function StrengthLogger({
         alert("Please enter a valid number for weight.");
         return;
       }
+
+      currentSet.isLogged = true;
+      setSetsData(newSetsData);
+
+      onSetUpdate({
+        exerciseName: exercise.name,
+        setNumber: currentSet.setNumber,
+        weight: isBodyweight ? currentSet.weight || 0 : currentSet.weight,
+        reps: currentSet.reps,
+      });
     }
-
-    currentSet.isLogged = !currentSet.isLogged;
-    setSetsData(newSetsData);
-
-    onSetUpdate({
-      exerciseName: exercise.name,
-      setNumber: currentSet.setNumber,
-      // Ensure weight is sent as 0 for bodyweight exercises if the input is empty
-      weight: isBodyweight ? currentSet.weight || "0" : currentSet.weight,
-      reps: currentSet.reps,
-    });
   };
 
   return (
     <div>
       {lastPerformance && (
         <LastPerformance>
-          Last time: {lastPerformance.weight}kg x {lastPerformance.reps} reps
+          Last time:{" "}
+          {lastPerformance.weight > 0 ? `${lastPerformance.weight}kg x ` : ""}
+          {lastPerformance.reps} reps
         </LastPerformance>
       )}
       <p style={{ textAlign: "center", color: theme.colors.textMuted }}>
@@ -131,7 +135,12 @@ function StrengthLogger({
 
       <div>
         {setsData.map((set, index) => (
-          <SetRow key={index} isLogged={set.isLogged}>
+          <SetRow
+            key={index}
+            isLogged={set.isLogged}
+            isBodyweight={isBodyweight}
+          >
+            <span>Set {set.setNumber}</span>
             {!isBodyweight && (
               <SetInput
                 type="number"

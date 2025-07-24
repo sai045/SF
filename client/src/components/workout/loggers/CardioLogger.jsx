@@ -52,12 +52,24 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
   const isLogged = initialLogs.length > 0;
 
   // Set initial state from master exercise, but allow user override
-  const [duration, setDuration] = useState(parseFloat(exercise.reps) || 10);
-  const [speed, setSpeed] = useState(masterExercise.defaultSpeed_kmph || 6);
+  const [duration, setDuration] = useState(
+    isLogged ? parseFloat(loggedData.reps) : parseFloat(exercise.reps)
+  );
+  const [speed, setSpeed] = useState(
+    isLogged && typeof loggedData.weight === "object"
+      ? loggedData.weight.speed
+      : masterExercise.defaultSpeed_kmph
+  );
   const [incline, setIncline] = useState(
-    masterExercise.defaultIncline_percent || 2
+    isLogged && typeof loggedData.weight === "object"
+      ? loggedData.weight.incline
+      : masterExercise.defaultIncline_percent
   );
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    setIsEditing(false);
+  }, [exercise]);
 
   const handleLog = () => {
     onSetUpdate({

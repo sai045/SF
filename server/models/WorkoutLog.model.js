@@ -1,12 +1,14 @@
 const mongoose = require("mongoose");
 
-const setLogSchema = new mongoose.Schema({
-  exerciseName: String,
-  setNumber: Number,
-  weight: Number,
-  reps: Number,
-  isPR: { type: Boolean, default: false },
-});
+const setLogSchema = new mongoose.Schema(
+  {
+    exerciseName: String,
+    setNumber: Number,
+    weight: { type: mongoose.Schema.Types.Mixed, default: 0 },
+    reps: { type: mongoose.Schema.Types.Mixed, required: true },
+  },
+  { _id: false }
+);
 
 const workoutLogSchema = new mongoose.Schema(
   {

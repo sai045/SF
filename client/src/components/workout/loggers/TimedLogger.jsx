@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { theme } from "../../../styles/theme";
 import { Button, Input } from "../../common/Styled";
-import { FaPlay, FaCheck } from "react-icons/fa";
+import { FaPlay, FaCheck, FaEdit } from "react-icons/fa";
 
 const TimedRow = styled.div`
   display: flex;
@@ -22,6 +22,9 @@ const CompletedDisplay = styled.div`
   font-size: 1.2rem;
   font-weight: bold;
   color: ${theme.colors.primary};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const TimedInput = styled(Input)`
@@ -42,13 +45,26 @@ const SelectUnit = styled.select`
 
 function TimedLogger({ exercise, onSetUpdate, initialLogs }) {
   const isLogged = initialLogs.length > 0;
+  const loggedData = isLogged ? initialLogs[0] : null;
 
-  // Parse the initial 'reps' string like "60s" or "5 min"
-  const initialDuration = parseFloat(exercise.reps) || 60;
-  const initialUnit = exercise.reps.includes("min") ? "min" : "s";
+  const parseReps = (repsString) => {
+    if (!repsString) return { duration: 60, unit: "s" };
+    const duration = parseFloat(repsString) || 60;
+    const unit = repsString.includes("min") ? "min" : "s";
+    return { duration, unit };
+  };
 
-  const [duration, setDuration] = useState(initialDuration);
-  const [unit, setUnit] = useState(initialUnit);
+  const [duration, setDuration] = useState(
+    parseReps(isLogged ? loggedData.reps : exercise.reps).duration
+  );
+  const [unit, setUnit] = useState(
+    parseReps(isLogged ? loggedData.reps : exercise.reps).unit
+  );
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    setIsEditing(false); // Reset edit state when exercise changes
+  }, [exercise]);
 
   const handleLog = () => {
     onSetUpdate({
@@ -57,46 +73,56 @@ function TimedLogger({ exercise, onSetUpdate, initialLogs }) {
       weight: 0,
       reps: `${duration}${unit}`,
     });
+    setIsEditing(false);
   };
+
+  if (isLogged && !isEditing) {
+    return (
+      <CompletedDisplay>
+        <span>
+          <FaCheck /> Completed: {loggedData.reps}
+        </span>
+        <Button
+          onClick={() => setIsEditing(true)}
+          style={{ width: "auto", background: theme.colors.accent }}
+        >
+          <FaEdit /> Edit
+        </Button>
+      </CompletedDisplay>
+    );
+  }
 
   return (
     <div>
       <p style={{ textAlign: "center", color: theme.colors.textMuted }}>
         Target: {exercise.reps}
       </p>
-
-      {isLogged ? (
-        <CompletedDisplay>
-          <FaCheck /> Completed: {initialLogs[0].reps}
-        </CompletedDisplay>
-      ) : (
-        <TimedRow>
-          <div
-            style={{
-              flexGrow: 1,
-              display: "flex",
-              justifyContent: "center",
-              gap: "1rem",
-            }}
-          >
-            <TimedInput
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-            />
-            <SelectUnit value={unit} onChange={(e) => setUnit(e.target.value)}>
-              <option value="s">Seconds</option>
-              <option value="min">Minutes</option>
-            </SelectUnit>
-          </div>
-          <Button
-            onClick={handleLog}
-            style={{ width: "auto", padding: "1rem 2rem" }}
-          >
-            <FaPlay /> LOG
-          </Button>
-        </TimedRow>
-      )}
+      <TimedRow>
+        <div
+          style={{
+            flexGrow: 1,
+            display: "flex",
+            justifyContent: "center",
+            gap: "1rem",
+          }}
+        >
+          <TimedInput
+            type="number"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+          />
+          <SelectUnit value={unit} onChange={(e) => setUnit(e.target.value)}>
+            <option value="s">Seconds</option>
+            <option value="min">Minutes</option>
+          </SelectUnit>
+        </div>
+        <Button
+          onClick={handleLog}
+          style={{ width: "auto", padding: "1rem 2rem" }}
+        >
+          <FaPlay /> {isLogged ? "UPDATE LOG" : "LOG"}
+        </Button>
+      </TimedRow>
     </div>
   );
 }
