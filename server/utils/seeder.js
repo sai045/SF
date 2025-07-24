@@ -109,6 +109,24 @@ const seedIngredients = [
     category: "Pantry",
     isVerified: true,
   },
+  {
+    name: "Ginger Garlic Paste",
+    calories_per_100g: 90.5,
+    protein_per_100g: 4.3,
+    carbs_per_100g: 17.2,
+    fats_per_100g: 0.5,
+    category: "Produce",
+    isVerified: true,
+  },
+  {
+    name: "Sunflower Refined Oil",
+    calories_per_100g: 900,
+    protein_per_100g: 0,
+    carbs_per_100g: 0,
+    fats_per_100g: 100,
+    category: "Other",
+    isVerified: true,
+  }
 ];
 
 // =================================================================
@@ -120,7 +138,7 @@ const seedMeals = [
     templateType: "Pre-Workout",
     ingredients: [
       { name: "Sattu Powder", quantity: "40g" },
-      { name: "Banana", quantity: "1 medium" },
+      { name: "Banana", quantity: "100g" },
     ],
   },
   {
@@ -138,8 +156,27 @@ const seedMeals = [
     ingredients: [
       { name: "Chicken Breast", quantity: "200g" },
       { name: "Soya Chunks (Dry)", quantity: "60g" },
+      { name: "Whole Wheat Flour", quantity: "100g" },
+      { name: "Plain Curd/Yogurt", quantity: "40g" },
+      { name: "Ginger Garlic Paste", quantity: "15g" },
+      { name: "Sunflower Refined Oil", quantity: "10g" },
     ],
   },
+  {
+    name: "Protein-Packed Dinner",
+    templateType: "Dinner",
+    ingredients: [
+      { name: "Egg (Large)", quantity: "8" },
+      { name: "Sunflower Refined Oil", quantity: "5g" },
+    ],
+  },
+  {
+    name: "Snacks",
+    templateType: "Snacks",
+    ingredients: [
+      { name: "Banana", quantity: "100g" },
+    ],
+  }
 ];
 
 // =================================================================
