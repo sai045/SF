@@ -6,6 +6,7 @@ const setLogSchema = new mongoose.Schema(
     setNumber: Number,
     weight: { type: mongoose.Schema.Types.Mixed, default: 0 },
     reps: { type: mongoose.Schema.Types.Mixed, required: true },
+    exerciseIndex: { type: Number, required: true },
   },
   { _id: false }
 );

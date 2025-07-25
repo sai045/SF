@@ -43,7 +43,7 @@ const SelectUnit = styled.select`
   font-size: 1rem;
 `;
 
-function TimedLogger({ exercise, onSetUpdate, initialLogs }) {
+function TimedLogger({ exercise, onSetUpdate, initialLogs, exerciseIndex }) {
   const isLogged = initialLogs.length > 0;
   const loggedData = isLogged ? initialLogs[0] : null;
 
@@ -72,6 +72,7 @@ function TimedLogger({ exercise, onSetUpdate, initialLogs }) {
       setNumber: 1, // Timed exercises are one set
       weight: 0,
       reps: `${duration}${unit}`,
+      exerciseIndex
     });
     setIsEditing(false);
   };

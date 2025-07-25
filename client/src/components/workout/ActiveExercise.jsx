@@ -50,40 +50,28 @@ function ActiveExercise({
   const renderLogger = () => {
     if (!masterExercise) return <p>Loading exercise data...</p>;
 
+    const loggerProps = {
+      exercise,
+      exerciseIndex, // Pass the index to all logger types
+      onSetUpdate,
+      initialLogs,
+      masterExercise,
+    };
+
     if (
       masterExercise.category === "LISS" ||
       masterExercise.category === "HIIT"
     ) {
-      return (
-        <CardioLogger
-          exercise={exercise}
-          onSetUpdate={onSetUpdate}
-          initialLogs={initialLogs}
-          masterExercise={masterExercise}
-        />
-      );
+      return <CardioLogger {...loggerProps} />;
     }
 
     switch (masterExercise.unit) {
       case "per_rep_and_rest":
         return (
-          <StrengthLogger
-            exercise={exercise}
-            onSetUpdate={onSetUpdate}
-            initialLogs={initialLogs}
-            lastPerformance={lastPerformance}
-            masterExercise={masterExercise}
-          />
+          <StrengthLogger {...loggerProps} lastPerformance={lastPerformance} />
         );
       case "per_minute":
-        return (
-          <TimedLogger
-            exercise={exercise}
-            onSetUpdate={onSetUpdate}
-            initialLogs={initialLogs}
-            masterExercise={masterExercise}
-          />
-        );
+        return <TimedLogger {...loggerProps} />;
       default:
         return <p>Unsupported exercise type.</p>;
     }

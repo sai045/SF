@@ -139,6 +139,28 @@ const createPermanentWorkoutLog = async (
   user.exp += expGained;
   const updatedUser = await checkAndApplyLevelUp(user._id);
 
+  // --- FIX FOR WORKOUT STREAK ---
+  const today = new Date();
+  const yesterday = subDays(today, 1);
+
+  // Check if the last workout was yesterday to continue the streak
+  if (
+    user.streaks?.workout?.lastDate &&
+    isSameDay(yesterday, user.streaks.workout.lastDate)
+  ) {
+    user.streaks.workout.count += 1;
+  }
+  // Check if the last workout was NOT today to start a new streak
+  else if (
+    !user.streaks?.workout?.lastDate ||
+    !isSameDay(today, user.streaks.workout.lastDate)
+  ) {
+    user.streaks.workout.count = 1;
+  }
+  // If a workout was already logged today, the streak count remains the same.
+
+  user.streaks.workout.lastDate = today;
+
   // 9. Return all necessary data to the controller that called this function
   return {
     message: `[System] Quest Complete! Workout logged. You gained ${expGained} EXP and hit ${prCount} PR(s)!`,

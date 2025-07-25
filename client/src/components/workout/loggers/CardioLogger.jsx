@@ -48,7 +48,13 @@ const CompletedDisplay = styled.div`
   align-items: center;
 `;
 
-function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
+function CardioLogger({
+  exercise,
+  onSetUpdate,
+  initialLogs,
+  masterExercise,
+  exerciseIndex,
+}) {
   const isLogged = initialLogs.length > 0;
   // --- THIS IS THE FIX ---
   // Define loggedData at the top level so it's available for state initialization.
@@ -84,6 +90,7 @@ function CardioLogger({ exercise, onSetUpdate, initialLogs, masterExercise }) {
         incline: parseFloat(incline),
       },
       reps: `${duration}min`,
+      exerciseIndex,
     });
     setIsEditing(false);
   };

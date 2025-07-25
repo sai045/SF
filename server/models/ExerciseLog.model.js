@@ -20,6 +20,7 @@ const exerciseLogSchema = new mongoose.Schema(
     reps: { type: mongoose.Schema.Types.Mixed, required: true },
 
     date: { type: Date, default: Date.now },
+    exerciseIndex: { type: Number, required: true },
   },
   { timestamps: true }
 );

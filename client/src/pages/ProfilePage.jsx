@@ -208,7 +208,7 @@ function ProfilePage() {
                   color={theme.colors.danger}
                 />
                 <StatBox
-                  value={user.streaks?.workout?.count || 0}
+                  value={stats.workoutStreak || 0}
                   label="Workout Streak"
                   color={theme.colors.secondary}
                 />

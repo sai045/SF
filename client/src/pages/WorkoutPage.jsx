@@ -282,6 +282,7 @@ function WorkoutPage() {
         {error && <ErrorMessage>{error}</ErrorMessage>}
 
         <ActiveExercise
+          key={currentExerciseIndex + currentExercise.name}
           exercise={currentExercise}
           onSetUpdate={handleSetUpdate}
           initialLogs={logsForCurrentExercise}

@@ -194,7 +194,7 @@ const seedMasterExercises = [
     name: "Treadmill Brisk Walk",
     metValue: 4.3,
     unit: "per_minute",
-    category: "Warm-up",
+    category: "LISS",
     defaultSpeed_kmph: 6,
     defaultIncline_percent: 2,
   },
@@ -217,9 +217,9 @@ const seedMasterExercises = [
   {
     name: "Bodyweight Squats",
     metValue: 5.0,
-    unit: "per_minute",
-    category: "Warm-up",
-    youtubeLink: "l83R5PblSMA",
+    unit: "per_rep_and_rest",
+    category: "Strength",
+    youtubeLink: "xqvAg4ltc3o",
     isBodyweight: true,
   },
   {

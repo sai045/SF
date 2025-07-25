@@ -9,6 +9,7 @@ const WorkoutLog = require("../models/WorkoutLog.model");
 const ExerciseLog = require("../models/ExerciseLog.model");
 const { ALL_ACHIEVEMENTS } = require("../utils/achievements");
 const mongoose = require("mongoose");
+const { subDays, isSameDay } = require("date-fns");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -143,63 +144,82 @@ const getProfileStats = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user._id);
 
-    const totalWorkouts = await WorkoutLog.countDocuments({ userId });
+    const recentWorkouts = await WorkoutLog.find({ userId }).sort({ date: -1 });
+    let workoutStreak = 0;
+    if (recentWorkouts.length > 0) {
+      const today = new Date();
+      const yesterday = subDays(today, 1);
+      let lastWorkoutDate = new Date(recentWorkouts[0].date);
 
-    // --- FIX APPLIED HERE: Filter for numeric types before calculating totalVolume ---
-    const exerciseStats = await ExerciseLog.aggregate([
-      {
-        $match: {
-          userId: userId,
-          // Only include documents where both weight and reps are numbers
-          weight: { $type: "number" },
-          reps: { $type: "number" },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalVolume: { $sum: { $multiply: ["$weight", "$reps"] } },
-        },
-      },
-    ]);
+      if (
+        isSameDay(today, lastWorkoutDate) ||
+        isSameDay(yesterday, lastWorkoutDate)
+      ) {
+        workoutStreak = 1;
+        let currentDate = lastWorkoutDate;
+        for (let i = 1; i < recentWorkouts.length; i++) {
+          const previousDate = subDays(currentDate, 1);
+          const nextWorkoutDate = new Date(recentWorkouts[i].date);
+          if (isSameDay(previousDate, nextWorkoutDate)) {
+            workoutStreak++;
+            currentDate = nextWorkoutDate;
+          } else if (!isSameDay(currentDate, nextWorkoutDate)) {
+            // Break if the next log isn't on the same day or the day before
+            break;
+          }
+        }
+      }
+    }
 
-    // --- FIX APPLIED HERE: Filter for numeric types before calculating top PRs ---
-    const topPRs = await ExerciseLog.aggregate([
-      {
-        $match: {
-          userId: userId,
-          // Only include documents where both weight and reps are numbers
-          weight: { $type: "number" },
-          reps: { $type: "number" },
-        },
-      },
-      {
-        $addFields: {
-          e1rm: {
-            $multiply: ["$weight", { $add: [1, { $divide: ["$reps", 30] }] }],
-          },
-        },
-      },
-      { $sort: { e1rm: -1 } },
-      {
-        $group: {
-          _id: "$exerciseName",
-          bestSet: { $first: "$$ROOT" },
-        },
-      },
-      { $sort: { "bestSet.e1rm": -1 } },
-      { $limit: 5 },
-    ]);
+    const totalWorkouts = recentWorkouts.length;
+
+    // --- START OF THE NEW LOGIC: JAVASCRIPT AGGREGATION ---
+
+    // 1. Fetch ALL exercise logs for the user.
+    const allExerciseLogs = await ExerciseLog.find({ userId });
+
+    let totalVolume = 0;
+    const bestSets = {}; // Use a map to track the best set for each exercise
+
+    // 2. Loop through all logs in the application layer.
+    for (const log of allExerciseLogs) {
+      // Safely parse weight and reps
+      const weight = parseFloat(log.weight);
+      const reps = parseInt(log.reps, 10);
+
+      // Check if both are valid numbers. This correctly filters out cardio/timed logs.
+      if (!isNaN(weight) && !isNaN(reps)) {
+        // A. Calculate Total Volume
+        totalVolume += weight * reps;
+
+        // B. Calculate e1RM and check for Top PRs
+        const e1rm = weight * (1 + reps / 30);
+
+        // If we haven't seen this exercise before, or if this set is better, update it.
+        if (
+          !bestSets[log.exerciseName] ||
+          e1rm > bestSets[log.exerciseName].e1rm
+        ) {
+          bestSets[log.exerciseName] = {
+            exerciseName: log.exerciseName,
+            weight: weight,
+            reps: reps,
+            e1rm: e1rm,
+          };
+        }
+      }
+    }
+
+    // 3. Sort the best sets to find the top 5 PRs
+    const topPRs = Object.values(bestSets)
+      .sort((a, b) => b.e1rm - a.e1rm)
+      .slice(0, 5);
 
     const stats = {
       totalWorkouts,
-      totalVolume: exerciseStats[0]?.totalVolume || 0,
-      topPRs: topPRs.map((pr) => ({
-        exerciseName: pr._id,
-        weight: pr.bestSet.weight,
-        reps: pr.bestSet.reps,
-        e1rm: pr.bestSet.e1rm,
-      })),
+      totalVolume: totalVolume,
+      workoutStreak: workoutStreak,
+      topPRs: topPRs,
     };
 
     res.json(stats);

@@ -57,6 +57,7 @@ function StrengthLogger({
   initialLogs,
   lastPerformance,
   masterExercise,
+  exerciseIndex,
 }) {
   const [setsData, setSetsData] = useState([]);
   const isBodyweight = masterExercise?.isBodyweight || false;
@@ -116,6 +117,7 @@ function StrengthLogger({
         setNumber: currentSet.setNumber,
         weight: isBodyweight ? currentSet.weight || 0 : currentSet.weight,
         reps: currentSet.reps,
+        exerciseIndex: exerciseIndex,
       });
     }
   };
