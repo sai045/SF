@@ -36,6 +36,7 @@ function ActiveExercise({
   onSetUpdate,
   initialLogs,
   masterExercise,
+  exerciseIndex,
 }) {
   const [lastPerformance, setLastPerformance] = useState(null);
 
